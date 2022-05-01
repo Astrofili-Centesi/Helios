@@ -48,7 +48,7 @@ jobs:
          ref: gh-pages
       - name: update file
         run: |
-            mkdir data
+            mkdir data || true
             cp /tmp/db_latest.json data
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
