@@ -63,7 +63,7 @@ jobs:
           commit_user_email: my-github-actions-bot@example.org # defaults to "actions@github.com"
           commit_author: Author <actions@github.com> # defaults to author of the commit that triggered the run
 
-          branch: gh_pages
+          branch: gh-pages
   
           # Optional. Tag name being created in the local repository and 
           # pushed to remtoe repository and defined branch.
