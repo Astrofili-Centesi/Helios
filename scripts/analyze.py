@@ -1,6 +1,10 @@
 import pandas as pd
+import sys
 
-d = pd.read_csv('db.csv')
+src=sys.argv[1]
+dst=sys.argv[2]
+
+d = pd.read_csv(src)
 
 d['data'] = pd.to_datetime(d.data).dt.tz_localize('Europe/Rome')
 d.index=d['data']
@@ -8,4 +12,4 @@ d.drop(columns=['data'],inplace=True)
 
 d24=d.last('24h')
 
-d24.to_json('db_latest.json')
+d24.to_json(dst)
