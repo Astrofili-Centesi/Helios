@@ -41,8 +41,12 @@ jobs:
             if [ -f scripts/requirements.txt ]; then pip install -r scripts/requirements.txt; fi
       - name: execute script
         run: |
+            cp db.csv /tmp/
+            python scripts/analyze.py /tmp/db.csv /tmp/db_latest.json
+            git switch gh-pages
             mkdir data
-            python scripts/analyze.py db.csv data/db_latest.json
+            cp /tmp/db_latest.json data
+            
         
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
