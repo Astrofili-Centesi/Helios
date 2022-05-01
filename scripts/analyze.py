@@ -12,4 +12,4 @@ d.drop(columns=['data'],inplace=True)
 
 d24=d.last('24h')
 
-d24.to_json(dst)
+d24.to_json(dst, date_format='iso')
