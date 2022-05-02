@@ -65,7 +65,7 @@ var ch1data={type:'scatter', mode: 'lines', name:'ch1', x:[],y:[]};
 var ch2data={type:'scatter', mode: 'lines', name:'ch2', x:[],y:[]};
 var ch3data={type:'scatter', mode: 'lines', name:'ch3', x:[],y:[]};
 
-$.getJSON( "{{site.url}}/data/db_latest.json", function( inputdata ) {
+$.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
 
         var ch1={
 label: 'ch1',
