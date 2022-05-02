@@ -4,7 +4,9 @@ title: Astrofili Centesi - Sistema Helios
 ---
 
 
-# Dati delle ultime 24h di registrazione
+# Astrofili Centesi - Sistema Helios
+
+## Dati delle ultime 24h di registrazione
 
 
 <div id="plotlyDiv"></div>
