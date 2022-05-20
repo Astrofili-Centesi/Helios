@@ -6,7 +6,7 @@ dst=sys.argv[2]
 
 d = pd.read_csv(src)
 
-d['data'] = pd.to_datetime(d.data).dt.tz_localize('Europe/Rome')
+d['data'] = pd.to_datetime(d.data).dt.tz_localize('UTC')
 d.index=d['data']
 d.drop(columns=['data'],inplace=True)
 
