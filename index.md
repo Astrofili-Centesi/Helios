@@ -11,6 +11,24 @@ title: Astrofili Centesi - Sistema Helios
 
 <div id="plotlyDiv"></div>
 
+
+
+## Il sistema Helios VLF solar telescope
+
+Helios VLF è uno strumento di tipo ROEON destinato a raccogliere informazioni sui brillamenti solari, sulle tempeste geomagnetiche, sulle scariche atmosferiche se su tanti altri eventi di origine naturale.
+
+Le sue lunghe braccia gli conferiscono un'alta sensibilità che consente di raccogliere dati accurati.
+
+Il sistema si compone di un dipolo a correnti di terra con ampia area di cattura, di un circuito di trattamento del segnale, di un acquisitore, di un sistema di elaborazione matematica del segnale e infine di un logger in grado di archiviare l'intera quantità di dati
+elaborati, che sono poi [resi disponibili su internet](https://github.com/Astrofili-Centesi/Helios).
+
+L'antenna di 25m è totalmente interrata, offre una buona sensibilità a fronte di un eccezionale rapporto segnale/rumore ed è completamente invisibile.
+
+L'intero sistema è stato progettato e costruito dagli [Astrofili Centesi](https://www.astrofilicentesi.it/).
+
+
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -57,15 +75,24 @@ second: 'yyyy-MM-dd hh:mm:ss'}
 
 }
 
+var layout = {
+xaxis: {
+title: 'timestamp'
+       },
+yaxis: {
+title: "dB"
+       }
+};
+
 function plotPlotly(ch1data,ch2data,ch3data) {
 var plotlydata=[ch1data,ch2data,ch3data];
-Plotly.newPlot('plotlyDiv',plotlydata);
+Plotly.newPlot('plotlyDiv',plotlydata, layout);
 }
 
 var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'ch1', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'ch2', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'ch3', x:[],y:[]};
+var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
+var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
+var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
 
 $.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
 
@@ -124,5 +151,6 @@ plotPlotly(ch1data,ch2data,ch3data);
 
 
 </script>
+
 
 
