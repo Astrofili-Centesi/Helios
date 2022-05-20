@@ -1,5 +1,4 @@
 # Helios
 Dati provenienti da Helios
-sistema di astrofili centesi
-
+sistema di [Astrofili Centesi](https://www.astrofilicentesi.it/).
 
