@@ -16,6 +16,10 @@ HWU e ICV sono le sigle di due trasmettitori NATO:
 * HWU è un trasmettitore in Francia nei pressi di Rosnay
 * VLF è un trasmettitore in Italia sull'isola di Tavolara
 
+## Dati dell'ultimo giorno di registrazione
+
+<div id="plotlyDiv2"></div>
+
 ## Il sistema Helios VLF solar telescope
 
 Helios VLF è uno strumento di tipo ROEON (Rivelatore Onde Elettromagnetiche di Origine Naturale) destinato a raccogliere informazioni sui brillamenti solari, sulle tempeste geomagnetiche, sulle scariche atmosferiche se su tanti altri eventi di origine naturale.
@@ -46,43 +50,6 @@ L'intero sistema è stato progettato e costruito dagli [Astrofili Centesi](https
 
 <script>
 
-function renderChart(labels,ch1,ch2,ch3) {
-    var ctx = document.getElementById("myChart").getContext('2d');
-
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [ch1,ch2,ch3]
-        },
-        options: {
-elements: {
-point: {
-radius: 0
-}
-},
-plugins: {
-            title: {
-                display: true,
-                text: "Acquisizione sistema Helios"
-            }
-            },
-            scales: {
-            x: {
-                type: 'time',
-                ticks: {
-source:'data'},
-time: { unit: 'second',
-displayFormats: {
-second: 'yyyy-MM-dd hh:mm:ss'}
-            }
-        }
-        }
-    }});
-
-
-
-}
 
 var layout = {
 xaxis: {
@@ -93,9 +60,9 @@ title: "dB"
        }
 };
 
-function plotPlotly(ch1data,ch2data,ch3data) {
+function plotPlotly(divname,ch1data,ch2data,ch3data) {
 var plotlydata=[ch1data,ch2data,ch3data];
-Plotly.newPlot('plotlyDiv',plotlydata, layout);
+Plotly.newPlot(divname,plotlydata, layout);
 }
 
 var labels=[];
@@ -149,14 +116,60 @@ data: []
           ch3data['y'].push(val);
   });
 
-//renderChart(labels,ch1,ch2,ch3);
-plotPlotly(ch1data,ch2data,ch3data);
+plotPlotly('plotlyDiv',ch1data,ch2data,ch3data);
 
-//datasets.push(ch2);
-//datasets.push(ch3);
- 
 });
 
+
+$.getJSON( "{{site.baseurl}}/data/db_latest_day.json", function( inputdata ) {
+
+        var ch1={
+label: 'ch1',
+backgroundColor: 'rgb(255, 99, 132)',
+           borderColor: 'rgb(255, 99, 132)',
+           showLine: true,
+data: []
+};
+
+  $.each(inputdata['ch1'], function( key, val ) {
+      labels.push(parseInt(key));
+          ch1['data'].push({'x':parseInt(key),'y':val});
+          ch1data['x'].push(new Date(parseInt(key)).toISOString());
+          ch1data['y'].push(val);
+  });
+
+        var ch2={
+label: 'ch2',
+backgroundColor: 'rgb(218, 247, 166)',
+           borderColor: 'rgb(218, 247, 166)',
+           showLine: true,
+data: []
+};
+
+  $.each(inputdata['ch2'], function( key, val ) {
+          ch2['data'].push({'x':parseInt(key),'y':val});
+          ch2data['x'].push(new Date(parseInt(key)).toISOString());
+          ch2data['y'].push(val);
+  });
+
+
+        var ch3={
+label: 'ch3',
+backgroundColor: 'rgb(144, 12, 63)',
+           borderColor: 'rgb(144, 12, 63)',
+           showLine: true,
+data: []
+};
+
+  $.each(inputdata['ch3'], function( key, val ) {
+          ch3['data'].push({'x':parseInt(key),'y':val});
+          ch3data['x'].push(new Date(parseInt(key)).toISOString());
+          ch3data['y'].push(val);
+  });
+
+plotPlotly('plotlyDiv2',ch1data,ch2data,ch3data);
+
+});
 
 
 </script>
