@@ -11,11 +11,14 @@ title: Astrofili Centesi - Sistema Helios
 
 <div id="plotlyDiv"></div>
 
+HWU e ICV sono le sigle di due trasmettitori NATO:
 
+* HWU è un trasmettitore in Francia nei pressi di Rosnay
+* VLF è un trasmettitore in Italia sull'isola di Tavolara
 
 ## Il sistema Helios VLF solar telescope
 
-Helios VLF è uno strumento di tipo ROEON destinato a raccogliere informazioni sui brillamenti solari, sulle tempeste geomagnetiche, sulle scariche atmosferiche se su tanti altri eventi di origine naturale.
+Helios VLF è uno strumento di tipo ROEON (Rivelatore Onde Elettromagnetiche di Origine Naturale) destinato a raccogliere informazioni sui brillamenti solari, sulle tempeste geomagnetiche, sulle scariche atmosferiche se su tanti altri eventi di origine naturale.
 
 Le sue lunghe braccia gli conferiscono un'alta sensibilità che consente di raccogliere dati accurati.
 
@@ -26,7 +29,13 @@ L'antenna di 25m è totalmente interrata, offre una buona sensibilità a fronte 
 
 L'intero sistema è stato progettato e costruito dagli [Astrofili Centesi](https://www.astrofilicentesi.it/).
 
-
+<div class="row">
+<div class="col-12">
+<center>
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licenza Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />Quest'opera è distribuita con Licenza <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribuzione - Condividi allo stesso modo 4.0 Internazionale</a>.
+</center>
+</div>
+</div>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
