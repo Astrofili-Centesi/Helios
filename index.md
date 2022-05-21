@@ -14,7 +14,7 @@ title: Astrofili Centesi - Sistema Helios
 HWU e ICV sono le sigle di due trasmettitori NATO:
 
 * HWU è un trasmettitore in Francia nei pressi di Rosnay
-* VLF è un trasmettitore in Italia sull'isola di Tavolara
+* ICV è un trasmettitore in Italia sull'isola di Tavolara
 
 ## Dati dell'ultimo giorno di registrazione
 
