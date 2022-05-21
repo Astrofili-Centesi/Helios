@@ -65,12 +65,12 @@ var plotlydata=[ch1data,ch2data,ch3data];
 Plotly.newPlot(divname,plotlydata, layout);
 }
 
+
+$.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
 var labels=[];
 var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
 var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
 var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
-
-$.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
 
         var ch1={
 label: 'ch1',
@@ -122,6 +122,10 @@ plotPlotly('plotlyDiv',ch1data,ch2data,ch3data);
 
 
 $.getJSON( "{{site.baseurl}}/data/db_latest_day.json", function( inputdata ) {
+var labels=[];
+var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
+var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
+var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
 
         var ch1={
 label: 'ch1',
