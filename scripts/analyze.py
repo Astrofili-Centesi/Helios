@@ -3,7 +3,6 @@ import sys
 
 src=sys.argv[1]
 dst=sys.argv[2]
-dst2=sys.argv[3]
 
 d = pd.read_csv(src)
 
@@ -11,12 +10,17 @@ d['data'] = pd.to_datetime(d.data)
 d.index=d['data']
 d.drop(columns=['data'],inplace=True)
 
+# Sync with 5 minutes interval
+
+d=d.resample('300s').mean()
+
 d24=d.last('24h')
 
 d24.to_json(dst)
 
 
 # Salva un file con l'ultimo giorno intero
+dst2=sys.argv[3]
 lastTime=d.index[-1]
 yesterdayFrom=(lastTime-pd.Timedelta('1D')).floor('1D')
 yesterdayTo=(lastTime-pd.Timedelta('1D')).ceil('1D')
@@ -25,3 +29,20 @@ dYesterday=d[(d.index>yesterdayFrom) & (d.index < yesterdayTo)]
 
 dYesterday.to_json(dst2)
 
+# Salva un file con la media degli ultimi 5 giorni
+dst3=sys.argv[4]
+
+lastTime=d.index[-1]
+meandayFrom=(lastTime-pd.Timedelta('5D')).floor('5D')
+meandayTo=(lastTime-pd.Timedelta('5D')).ceil('5D')
+
+dmeanday=d[(d.index>meandayFrom) & (d.index < meandayTo)]
+
+dmean=dmeanday.groupby([dmeanday.index.hour,dmeanday.index.minute]).mean()
+
+dmean.index.set_names(['hour','minute'],inplace=True)
+dmean.reset_index(inplace=True)
+dmean.index=yesterdayFrom+pd.Series(map(lambda x:pd.Timedelta(hours=x),dmean['hour']))+pd.Series(map(lambda x:pd.Timedelta(minutes=x),dmean['minute']))
+dmean.drop(columns=['hour','minute'],inplace=True)
+
+dmean.to_json(dst3)
