@@ -18,8 +18,8 @@ d24.to_json(dst)
 
 # Salva un file con l'ultimo giorno intero
 lastTime=d.index[-1]
-yesterdayFrom=lastTime.floor('1D')-pd.Timedelta('1D')
-yesterdayTo=lastTime.ceil('1D')-pd.Timedelta('1D')
+yesterdayFrom=(lastTime-pd.Timedelta('1D')).floor('1D')
+yesterdayTo=(lastTime-pd.Timedelta('1D')).ceil('1D')
 
 dYesterday=d[(d.index>yesterdayFrom) & (d.index < yesterdayTo)]
 
