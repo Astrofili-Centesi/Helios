@@ -46,3 +46,7 @@ dmean.index=meandayFrom+pd.Series(map(lambda x:pd.Timedelta(hours=x),dmean['hour
 dmean.drop(columns=['hour','minute'],inplace=True)
 
 dmean.to_json(dst3)
+
+dst4=sys.argv[5]
+
+dmeanday.to_json(dst4)
