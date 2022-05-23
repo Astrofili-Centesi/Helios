@@ -42,7 +42,7 @@ dmean=dmeanday.groupby([dmeanday.index.hour,dmeanday.index.minute]).mean()
 
 dmean.index.set_names(['hour','minute'],inplace=True)
 dmean.reset_index(inplace=True)
-dmean.index=yesterdayFrom+pd.Series(map(lambda x:pd.Timedelta(hours=x),dmean['hour']))+pd.Series(map(lambda x:pd.Timedelta(minutes=x),dmean['minute']))
+dmean.index=meandayFrom+pd.Series(map(lambda x:pd.Timedelta(hours=x),dmean['hour']))+pd.Series(map(lambda x:pd.Timedelta(minutes=x),dmean['minute']))
 dmean.drop(columns=['hour','minute'],inplace=True)
 
 dmean.to_json(dst3)
