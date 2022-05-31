@@ -1,5 +1,6 @@
 import pandas as pd
 import sys
+import logging
 
 src=sys.argv[1]
 f_d24=sys.argv[2]
@@ -25,18 +26,20 @@ d24.to_json(f_d24)
 
 # Salva un file con l'ultimo giorno intero
 lastTime=d.index[-1]
+logging.info("lastTime {}".format(lastTime))
 yesterdayFrom=(lastTime-pd.Timedelta('1D')).floor('1D')
 yesterdayTo=(lastTime-pd.Timedelta('1D')).ceil('1D')
 
-dYesterday=d[(d.index>yesterdayFrom) & (d.index < yesterdayTo)]
+dYesterday=d[(d.index>=yesterdayFrom) & (d.index < yesterdayTo)]
 
 dYesterday.to_json(f_dday)
 
 # Salva un file con la media degli ultimi 5 giorni
 meandayFrom=(lastTime-pd.Timedelta('5D')).floor('5D')
 meandayTo=(lastTime-pd.Timedelta('5D')).ceil('5D')
+logging.info("meandayFrom {} meandayTo".format(meandayFrom,meandayTo))
 
-dmeanday=d[(d.index>meandayFrom) & (d.index < meandayTo)]
+dmeanday=d[(d.index>=meandayFrom) & (d.index < meandayTo)]
 
 dmean=dmeanday.groupby([dmeanday.index.hour,dmeanday.index.minute]).mean()
 
