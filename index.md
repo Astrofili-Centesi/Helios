@@ -14,13 +14,9 @@ HWU e ICV sono le sigle di due trasmettitori NATO:
 * HWU è un trasmettitore in Francia nei pressi di Rosnay
 * ICV è un trasmettitore in Italia sull'isola di Tavolara
 
-## Dati degli ultimi 5 giorni di registrazione
+## Dati dell'ultimo mese di registrazione
 
 (utilizzare i bottoni o lo slider per navigare)
-
-<div id="plotlyDiv2"></div>
-
-## Dati dell'ultimo mese di registrazione
 
 <div id="plotlyDiv4"></div>
 
@@ -229,125 +225,6 @@ data: []
   });
 
 plotPlotly('plotlyDiv3',ch1data,ch2data,ch3data,layout_base);
-
-});
-
-$.getJSON( "{{site.baseurl}}/data/db_latest_5days.json", function( inputdata ) {
-var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
-
-        var ch1={
-label: 'ch1',
-backgroundColor: 'rgb(255, 99, 132)',
-           borderColor: 'rgb(255, 99, 132)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch1'], function( key, val ) {
-      labels.push(parseInt(key));
-          ch1['data'].push({'x':parseInt(key),'y':val});
-          ch1data['x'].push(new Date(parseInt(key)).toISOString());
-          ch1data['y'].push(val);
-  });
-
-        var ch2={
-label: 'ch2',
-backgroundColor: 'rgb(218, 247, 166)',
-           borderColor: 'rgb(218, 247, 166)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch2'], function( key, val ) {
-          ch2['data'].push({'x':parseInt(key),'y':val});
-          ch2data['x'].push(new Date(parseInt(key)).toISOString());
-          ch2data['y'].push(val);
-  });
-
-
-        var ch3={
-label: 'ch3',
-backgroundColor: 'rgb(144, 12, 63)',
-           borderColor: 'rgb(144, 12, 63)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch3'], function( key, val ) {
-          ch3['data'].push({'x':parseInt(key),'y':val});
-          ch3data['x'].push(new Date(parseInt(key)).toISOString());
-          ch3data['y'].push(val);
-  });
-
-var selectorOptions = {
-
-    buttons: [{
-
-        step: 'day',
-
-        stepmode: 'backward',
-
-        count: 1,
-
-        label: '1d'
-
-    }, {
-
-        step: 'day',
-
-        stepmode: 'backward',
-
-        count: 2,
-
-        label: '2d'
-
-    }, {
-
-        step: 'day',
-
-        stepmode: 'backward',
-
-        count: 3,
-
-        label: '3d'
-
-    }, {
-
-        step: 'day',
-
-        stepmode: 'backward',
-
-        count: 4,
-
-        label: '4d'
-
-    }, {
-
-        step: 'all',
-
-    }],
-
-};
-
-const layout_base = {
-height: 800,
-        xaxis: {
-title: 'timestamp',
-       rangeselector: selectorOptions,
-
-       rangeslider: { range: 864000 }
-
-        },
-yaxis: {
-title: "dB",
-range: [-100,-20]
-       }
-};
-
-plotPlotly('plotlyDiv2',ch1data,ch2data,ch3data,layout_base);
 
 });
 
