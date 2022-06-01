@@ -56,7 +56,10 @@ dmean.to_json(f_dmean5)
 dmeanday.to_json(f_dlast5)
 
 # Salva un file con l'ultimo mese
-dlastMonth=d.last('1m')
+lastMonthFrom = lastTime - pd.DateOffset(months=1)
+dlastMonth=d[d.index>=lastMonthFrom]
+
+logging.info("last month from {} to {}".format(dlastMonth.index[0],dlastMonth.index[-1]))
 
 dlastMonth.to_json(f_dlastmonth)
 
