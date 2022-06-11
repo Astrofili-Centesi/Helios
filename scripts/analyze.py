@@ -17,14 +17,10 @@ d['data'] = pd.to_datetime(d.data)
 d.index=d['data']
 d.drop(columns=['data'],inplace=True)
 
-# Sync with 5 minutes interval
-
-d=d.resample('300s').mean()
 
 d24=d.last('24h')
 
 d24.to_json(f_d24)
-
 
 # Salva un file con l'ultimo giorno intero
 lastTime=d.index[-1]
@@ -38,7 +34,17 @@ dYesterday=d[(d.index>=yesterdayFrom) & (d.index < yesterdayTo)]
 
 dYesterday.to_json(f_dday)
 
+# Salva un file con l'ultimo mese
+lastMonthFrom = lastTime - pd.DateOffset(months=1)
+dlastMonth=d[d.index>=lastMonthFrom]
+
+logging.info("last month from {} to {}".format(dlastMonth.index[0],dlastMonth.index[-1]))
+
+dlastMonth.to_json(f_dlastmonth)
+
 # Salva un file con la media degli ultimi 5 giorni
+# Sync with 5 minutes interval
+d=d.resample('300s').mean()
 meandayFrom=(lastDay-pd.Timedelta('5D')).floor('1D')
 meandayTo=(lastDay).floor('1D')
 logging.info("meandayFrom {} meandayTo {}".format(meandayFrom,meandayTo))
@@ -54,12 +60,3 @@ dmean.drop(columns=['hour','minute'],inplace=True)
 
 dmean.to_json(f_dmean5)
 dmeanday.to_json(f_dlast5)
-
-# Salva un file con l'ultimo mese
-lastMonthFrom = lastTime - pd.DateOffset(months=1)
-dlastMonth=d[d.index>=lastMonthFrom]
-
-logging.info("last month from {} to {}".format(dlastMonth.index[0],dlastMonth.index[-1]))
-
-dlastMonth.to_json(f_dlastmonth)
-
