@@ -33,7 +33,7 @@ logging.info("yesterdayFrom {} yesterdayTo {}".format(yesterdayFrom,yesterdayTo)
 dYesterday=d[(d.index>=yesterdayFrom) & (d.index < yesterdayTo)]
 
 dYesterday=dYesterday.resample('60s').mean()
-dYesterday.to_json(f_dday)
+dYesterday.fillna(method='ffill').to_json(f_dday)
 
 # Salva un file con l'ultimo mese
 lastMonthFrom = lastTime - pd.DateOffset(months=1)
@@ -50,7 +50,7 @@ meandayFrom=(lastDay-pd.Timedelta('5D')).floor('1D')
 meandayTo=(lastDay).floor('1D')
 logging.info("meandayFrom {} meandayTo {}".format(meandayFrom,meandayTo))
 
-dmeanday=d[(d.index>=meandayFrom) & (d.index < meandayTo)]
+dmeanday=d[(d.index>=meandayFrom) & (d.index < meandayTo)].fillna(method='ffill')
 
 dmean=dmeanday.groupby([dmeanday.index.hour,dmeanday.index.minute]).mean()
 
