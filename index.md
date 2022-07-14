@@ -232,9 +232,6 @@ var ch3_1data={type:'scatter', mode: 'lines', name:'ICV_1d', x:[],y:[]};
           ch3_1data['y'].push(val);
   });
 
-console.log(ch1data);
-console.log(ch1_1data);
-
 var plotlydata=[ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data];
 //var plotlydata=[ch1_1data,ch2_1data,ch3_1data];
 //var plotlydata=[ch1data,ch2data,ch3data];
