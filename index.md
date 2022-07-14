@@ -55,7 +55,7 @@ title: 'timestamp'
        },
 yaxis: {
 title: "dB",
-range: [-100,-20]
+//range: [-100,-20]
        }
 };
 
@@ -174,57 +174,82 @@ plotPlotly('plotlyDiv',ch1data,ch2data,ch3data,layout_base);
 //
 //});
 
-$.getJSON( "{{site.baseurl}}/data/db_mean_5days.json", function( inputdata ) {
+function addZero(i) {
+  if (i < 10) {i = "0" + i}
+  return i;
+}
+
+function stripDate(timestamp)
+{
+    var d = new Date(parseInt(timestamp));
+    return addZero(d.getHours()) + ":" + addZero(d.getMinutes()) + ":" + addZero(d.getSeconds());
+}
+
+
+$.when(
+    $.getJSON( "{{site.baseurl}}/data/db_mean_5days.json" ),
+    $.getJSON( "{{site.baseurl}}/data/db_latest_day.json" )
+).done(function(mean5days, latest_day) {
+
 var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
+var ch1data={type:'scatter', mode: 'lines', name:'HWU_mean5d', x:[],y:[]};
+var ch2data={type:'scatter', mode: 'lines', name:'ICV_mean5d', x:[],y:[]};
+var ch3data={type:'scatter', mode: 'lines', name:'noise_mean5d', x:[],y:[]};
+var ch1_1data={type:'scatter', mode: 'lines', name:'noise_1d', x:[],y:[]};
+var ch2_1data={type:'scatter', mode: 'lines', name:'HWU_1d', x:[],y:[]};
+var ch3_1data={type:'scatter', mode: 'lines', name:'ICV_1d', x:[],y:[]};
 
-        var ch1={
-label: 'ch1',
-backgroundColor: 'rgb(255, 99, 132)',
-           borderColor: 'rgb(255, 99, 132)',
-           showLine: true,
-data: []
-};
 
-  $.each(inputdata['ch1'], function( key, val ) {
+  $.each(mean5days[0]['ch1'], function( key, val ) {
       labels.push(parseInt(key));
-          ch1['data'].push({'x':parseInt(key),'y':val});
-          ch1data['x'].push(new Date(parseInt(key)).toISOString());
+          ch1data['x'].push(stripDate(key));
           ch1data['y'].push(val);
   });
 
-        var ch2={
-label: 'ch2',
-backgroundColor: 'rgb(218, 247, 166)',
-           borderColor: 'rgb(218, 247, 166)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch2'], function( key, val ) {
-          ch2['data'].push({'x':parseInt(key),'y':val});
-          ch2data['x'].push(new Date(parseInt(key)).toISOString());
+  $.each(mean5days[0]['ch2'], function( key, val ) {
+          ch2data['x'].push(stripDate(key));
           ch2data['y'].push(val);
   });
 
-
-        var ch3={
-label: 'ch3',
-backgroundColor: 'rgb(144, 12, 63)',
-           borderColor: 'rgb(144, 12, 63)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch3'], function( key, val ) {
-          ch3['data'].push({'x':parseInt(key),'y':val});
-          ch3data['x'].push(new Date(parseInt(key)).toISOString());
+  $.each(mean5days[0]['ch3'], function( key, val ) {
+          ch3data['x'].push(stripDate(key));
           ch3data['y'].push(val);
   });
 
-plotPlotly('plotlyDiv3',ch1data,ch2data,ch3data,layout_base);
+  $.each(latest_day[0]['ch1'], function( key, val ) {
+      labels.push(parseInt(key));
+          ch1_1data['x'].push(stripDate(key));
+          ch1_1data['y'].push(val);
+  });
+
+  $.each(latest_day[0]['ch2'], function( key, val ) {
+          ch2_1data['x'].push(stripDate(key));
+          ch2_1data['y'].push(val);
+  });
+
+  $.each(latest_day[0]['ch3'], function( key, val ) {
+          ch3_1data['x'].push(stripDate(key));
+          ch3_1data['y'].push(val);
+  });
+
+console.log(ch1data);
+console.log(ch1_1data);
+
+var plotlydata=[ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data];
+//var plotlydata=[ch1_1data,ch2_1data,ch3_1data];
+//var plotlydata=[ch1data,ch2data,ch3data];
+const layout = {
+height: 800,
+        xaxis: {
+title: 'timestamp',
+        },
+yaxis: {
+title: "dB",
+//range: [-100,-20]
+       }
+};
+Plotly.newPlot('plotlyDiv3',plotlydata,layout);
+//plotPlotly('plotlyDiv3',ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data,layout_base);
 
 });
 
@@ -319,7 +344,7 @@ title: 'timestamp',
         },
 yaxis: {
 title: "dB",
-range: [-100,-20]
+//range: [-100,-20]
        }
 };
 
