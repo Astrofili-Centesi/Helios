@@ -330,7 +330,7 @@ var selectorOptions = {
 
 };
 
-const layout_base = {
+const layout_slider = {
 height: 800,
         xaxis: {
 title: 'timestamp',
@@ -340,12 +340,13 @@ title: 'timestamp',
 
         },
 yaxis: {
+fixedrange: false,
 title: "dB",
 //range: [-100,-20]
        }
 };
 
-plotPlotly('plotlyDiv4',ch1data,ch2data,ch3data,layout_base);
+plotPlotly('plotlyDiv4',ch1data,ch2data,ch3data,layout_slider);
 
 });
 
