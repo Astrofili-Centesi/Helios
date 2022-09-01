@@ -21,9 +21,11 @@ FTA e HWU sono le sigle di due trasmettitori NATO:
 
 <div id="plotlyDiv4"></div>
 
+<!-- IN MANUTENZIONE
 ## Dati medi degli ultimi 5 giorni di registrazione
 
 <div id="plotlyDiv3"></div>
+-->
 
 ## Spettrogramma del segnale
 
