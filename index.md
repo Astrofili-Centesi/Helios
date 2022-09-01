@@ -60,7 +60,7 @@ xaxis: {
 title: 'timestamp'
        },
 yaxis: {
-title: "dB",
+title: "dBFS",
 //range: [-100,-20]
        }
 };
@@ -247,7 +247,7 @@ height: 800,
 title: 'timestamp',
         },
 yaxis: {
-title: "dB",
+title: "dBFS",
 //range: [-100,-20]
        }
 };
@@ -347,7 +347,7 @@ title: 'timestamp',
         },
 yaxis: {
 fixedrange: false,
-title: "dB",
+title: "dBFS",
 //range: [-100,-20]
        }
 };
