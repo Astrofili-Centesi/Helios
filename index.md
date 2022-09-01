@@ -9,10 +9,11 @@ title: Astrofili Centesi - Sistema Helios
 
 <div id="plotlyDiv"></div>
 
-HWU e ICV sono le sigle di due trasmettitori NATO:
+FTA e HWU sono le sigle di due trasmettitori NATO:
 
+* FTA è un trasmettitore in Francia nei pressi di Seine-et-Marne
 * HWU è un trasmettitore in Francia nei pressi di Rosnay
-* ICV è un trasmettitore in Italia sull'isola di Tavolara
+* DCF77 è un trasmettitore in Germania per la diffusione del segnale orario
 
 ## Dati dell'ultimo mese di registrazione
 
@@ -67,9 +68,9 @@ Plotly.newPlot(divname,plotlydata, layout);
 
 $.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
 var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
+var ch1data={type:'scatter', mode: 'lines', name:'FTA', x:[],y:[]};
+var ch2data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
+var ch3data={type:'scatter', mode: 'lines', name:'DCF77', x:[],y:[]};
 
         var ch1={
 label: 'ch1',
