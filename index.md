@@ -25,6 +25,9 @@ FTA e HWU sono le sigle di due trasmettitori NATO:
 
 <div id="plotlyDiv3"></div>
 
+## Spettrogramma del segnale
+
+<img src="https://raw.githubusercontent.com/Astrofili-Centesi/Helios/main/spectrogram.png"> 
 
 ## Il sistema Helios VLF solar telescope
 
