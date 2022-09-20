@@ -46,6 +46,9 @@ L'antenna, di 25m, è totalmente interrata, offre una buona sensibilità a front
 
 L'intero sistema è stato progettato e costruito dagli [Astrofili Centesi](https://www.astrofilicentesi.it/).
 
+Il funzionamento di Helios è stato documentato in questo articolo [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7097629.svg)](https://doi.org/10.5281/zenodo.7097629).
+
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js"></script>
