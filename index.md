@@ -70,63 +70,35 @@ title: "dBFS",
        }
 };
 
-function plotPlotly(divname,ch1data,ch2data,ch3data,layout) {
-var plotlydata=[ch1data,ch2data,ch3data];
+function plotPlotly(divname,channels,layout) {
+var plotlydata=channels;
 Plotly.newPlot(divname,plotlydata, layout);
 }
 
 
 $.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
 var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'FTA', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'DCF77', x:[],y:[]};
+var channels=[];
 
-        var ch1={
-label: 'ch1',
-backgroundColor: 'rgb(255, 99, 132)',
-           borderColor: 'rgb(255, 99, 132)',
-           showLine: true,
+$.each(inputdata, function(channel_name, channel_data) {
+    var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+        var ch={
+label: channel_name,
+   showLine: true,
 data: []
 };
 
-  $.each(inputdata['ch1'], function( key, val ) {
+  $.each(channel_data, function( key, val ) {
       labels.push(parseInt(key));
-          ch1['data'].push({'x':parseInt(key),'y':val});
-          ch1data['x'].push(new Date(parseInt(key)).toISOString());
-          ch1data['y'].push(val);
+          ch['data'].push({'x':parseInt(key),'y':val});
+          chdata['x'].push(new Date(parseInt(key)).toISOString());
+          chdata['y'].push(val);
   });
 
-        var ch2={
-label: 'ch2',
-backgroundColor: 'rgb(218, 247, 166)',
-           borderColor: 'rgb(218, 247, 166)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch2'], function( key, val ) {
-          ch2['data'].push({'x':parseInt(key),'y':val});
-          ch2data['x'].push(new Date(parseInt(key)).toISOString());
-          ch2data['y'].push(val);
+  channels.push(chdata);
   });
 
-
-        var ch3={
-label: 'ch3',
-backgroundColor: 'rgb(144, 12, 63)',
-           borderColor: 'rgb(144, 12, 63)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch3'], function( key, val ) {
-          ch3['data'].push({'x':parseInt(key),'y':val});
-          ch3data['x'].push(new Date(parseInt(key)).toISOString());
-          ch3data['y'].push(val);
-  });
-
-plotPlotly('plotlyDiv',ch1data,ch2data,ch3data,layout_base);
+    plotPlotly('plotlyDiv',channels,layout_base);
 
 });
 
