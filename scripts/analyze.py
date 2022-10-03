@@ -13,10 +13,14 @@ f_dlastmonth=sys.argv[6]
 
 d = pd.read_csv(src)
 
+freq = pd.read_csv('freq.csv')
+freq.index=freq['Canale']
+
 d['data'] = pd.to_datetime(d.data)
 d.index=d['data']
 d.drop(columns=['data'],inplace=True)
 
+d.rename(columns=dict(zip(freq['Canale'], freq['Sigla'])),inplace=True)
 
 d24=d.last('24h')
 
