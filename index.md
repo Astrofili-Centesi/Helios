@@ -76,212 +76,35 @@ Plotly.newPlot(divname,plotlydata, layout);
 }
 
 
-$.getJSON( "{{site.baseurl}}/data/db_latest.json", function( inputdata ) {
-var labels=[];
-var channels=[];
+function plotJSON(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+            var labels=[];
+            var channels=[];
 
-$.each(inputdata, function(channel_name, channel_data) {
-    var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
-        var ch={
+            $.each(inputdata, function(channel_name, channel_data) {
+                    var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+                    var ch={
 label: channel_name,
-   showLine: true,
+showLine: true,
 data: []
 };
 
-  $.each(channel_data, function( key, val ) {
-      labels.push(parseInt(key));
-          ch['data'].push({'x':parseInt(key),'y':val});
-          chdata['x'].push(new Date(parseInt(key)).toISOString());
-          chdata['y'].push(val);
-  });
+$.each(channel_data, function( key, val ) {
+    labels.push(parseInt(key));
+    ch['data'].push({'x':parseInt(key),'y':val});
+    chdata['x'].push(new Date(parseInt(key)).toISOString());
+    chdata['y'].push(val);
+    });
 
-  channels.push(chdata);
-  });
-
-    plotPlotly('plotlyDiv',channels,layout_base);
-
+channels.push(chdata);
 });
 
-
-//$.getJSON( "{{site.baseurl}}/data/db_latest_day.json", function( inputdata ) {
-//var labels=[];
-//var ch1data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
-//var ch2data={type:'scatter', mode: 'lines', name:'ICV', x:[],y:[]};
-//var ch3data={type:'scatter', mode: 'lines', name:'noise', x:[],y:[]};
-//
-//        var ch1={
-//label: 'ch1',
-//backgroundColor: 'rgb(255, 99, 132)',
-//           borderColor: 'rgb(255, 99, 132)',
-//           showLine: true,
-//data: []
-//};
-//
-//  $.each(inputdata['ch1'], function( key, val ) {
-//      labels.push(parseInt(key));
-//          ch1['data'].push({'x':parseInt(key),'y':val});
-//          ch1data['x'].push(new Date(parseInt(key)).toISOString());
-//          ch1data['y'].push(val);
-//  });
-//
-//        var ch2={
-//label: 'ch2',
-//backgroundColor: 'rgb(218, 247, 166)',
-//           borderColor: 'rgb(218, 247, 166)',
-//           showLine: true,
-//data: []
-//};
-//
-//  $.each(inputdata['ch2'], function( key, val ) {
-//          ch2['data'].push({'x':parseInt(key),'y':val});
-//          ch2data['x'].push(new Date(parseInt(key)).toISOString());
-//          ch2data['y'].push(val);
-//  });
-//
-//
-//        var ch3={
-//label: 'ch3',
-//backgroundColor: 'rgb(144, 12, 63)',
-//           borderColor: 'rgb(144, 12, 63)',
-//           showLine: true,
-//data: []
-//};
-//
-//  $.each(inputdata['ch3'], function( key, val ) {
-//          ch3['data'].push({'x':parseInt(key),'y':val});
-//          ch3data['x'].push(new Date(parseInt(key)).toISOString());
-//          ch3data['y'].push(val);
-//  });
-//
-//plotPlotly('plotlyDiv2',ch1data,ch2data,ch3data,layout_base);
-//
-//});
-
-function addZero(i) {
-  if (i < 10) {i = "0" + i}
-  return i;
-}
-
-function stripDate(timestamp)
-{
-    var d = new Date(parseInt(timestamp));
-    return addZero(d.getHours()) + ":" + addZero(d.getMinutes()) + ":" + addZero(d.getSeconds());
-}
-
-
-$.when(
-    $.getJSON( "{{site.baseurl}}/data/db_mean_5days.json" ),
-    $.getJSON( "{{site.baseurl}}/data/db_latest_day.json" )
-).done(function(mean5days, latest_day) {
-
-var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'HWU_mean5d', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'ICV_mean5d', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'noise_mean5d', x:[],y:[]};
-var ch1_1data={type:'scatter', mode: 'lines', name:'noise_1d', x:[],y:[]};
-var ch2_1data={type:'scatter', mode: 'lines', name:'HWU_1d', x:[],y:[]};
-var ch3_1data={type:'scatter', mode: 'lines', name:'ICV_1d', x:[],y:[]};
-
-
-  $.each(mean5days[0]['ch1'], function( key, val ) {
-      labels.push(parseInt(key));
-          ch1data['x'].push(stripDate(key));
-          ch1data['y'].push(val);
-  });
-
-  $.each(mean5days[0]['ch2'], function( key, val ) {
-          ch2data['x'].push(stripDate(key));
-          ch2data['y'].push(val);
-  });
-
-  $.each(mean5days[0]['ch3'], function( key, val ) {
-          ch3data['x'].push(stripDate(key));
-          ch3data['y'].push(val);
-  });
-
-  $.each(latest_day[0]['ch1'], function( key, val ) {
-      labels.push(parseInt(key));
-          ch1_1data['x'].push(stripDate(key));
-          ch1_1data['y'].push(val);
-  });
-
-  $.each(latest_day[0]['ch2'], function( key, val ) {
-          ch2_1data['x'].push(stripDate(key));
-          ch2_1data['y'].push(val);
-  });
-
-  $.each(latest_day[0]['ch3'], function( key, val ) {
-          ch3_1data['x'].push(stripDate(key));
-          ch3_1data['y'].push(val);
-  });
-
-var plotlydata=[ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data];
-//var plotlydata=[ch1_1data,ch2_1data,ch3_1data];
-//var plotlydata=[ch1data,ch2data,ch3data];
-const layout = {
-height: 800,
-        xaxis: {
-title: 'timestamp',
-        },
-yaxis: {
-title: "dBFS",
-//range: [-100,-20]
-       }
-};
-Plotly.newPlot('plotlyDiv3',plotlydata,layout);
-//plotPlotly('plotlyDiv3',ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data,layout_base);
-
+plotPlotly(divname,channels,layout);
 });
+}
 
-$.getJSON( "{{site.baseurl}}/data/db_latest_month.json", function( inputdata ) {
-var labels=[];
-var ch1data={type:'scatter', mode: 'lines', name:'FTA', x:[],y:[]};
-var ch2data={type:'scatter', mode: 'lines', name:'HWU', x:[],y:[]};
-var ch3data={type:'scatter', mode: 'lines', name:'DCF77', x:[],y:[]};
+plotJSON("{{site.baseurl}}/data/db_latest.json",'plotlyDiv',layout_base);
 
-        var ch1={
-label: 'ch1',
-backgroundColor: 'rgb(255, 99, 132)',
-           borderColor: 'rgb(255, 99, 132)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch1'], function( key, val ) {
-      labels.push(parseInt(key));
-          ch1['data'].push({'x':parseInt(key),'y':val});
-          ch1data['x'].push(new Date(parseInt(key)).toISOString());
-          ch1data['y'].push(val);
-  });
-
-        var ch2={
-label: 'ch2',
-backgroundColor: 'rgb(218, 247, 166)',
-           borderColor: 'rgb(218, 247, 166)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch2'], function( key, val ) {
-          ch2['data'].push({'x':parseInt(key),'y':val});
-          ch2data['x'].push(new Date(parseInt(key)).toISOString());
-          ch2data['y'].push(val);
-  });
-
-
-        var ch3={
-label: 'ch3',
-backgroundColor: 'rgb(144, 12, 63)',
-           borderColor: 'rgb(144, 12, 63)',
-           showLine: true,
-data: []
-};
-
-  $.each(inputdata['ch3'], function( key, val ) {
-          ch3['data'].push({'x':parseInt(key),'y':val});
-          ch3data['x'].push(new Date(parseInt(key)).toISOString());
-          ch3data['y'].push(val);
-  });
 
 var selectorOptions = {
 
@@ -329,9 +152,83 @@ title: "dBFS",
        }
 };
 
-plotPlotly('plotlyDiv4',ch1data,ch2data,ch3data,layout_slider);
+plotJSON("{{site.baseurl}}/data/db_latest_month.json", 'plotlyDiv4', layout_slider);
 
-});
+function addZero(i) {
+  if (i < 10) {i = "0" + i}
+  return i;
+}
+
+function stripDate(timestamp)
+{
+    var d = new Date(parseInt(timestamp));
+    return addZero(d.getHours()) + ":" + addZero(d.getMinutes()) + ":" + addZero(d.getSeconds());
+}
+
+
+//$.when(
+//    $.getJSON( "{{site.baseurl}}/data/db_mean_5days.json" ),
+//    $.getJSON( "{{site.baseurl}}/data/db_latest_day.json" )
+//).done(function(mean5days, latest_day) {
+//
+//var labels=[];
+//var ch1data={type:'scatter', mode: 'lines', name:'HWU_mean5d', x:[],y:[]};
+//var ch2data={type:'scatter', mode: 'lines', name:'ICV_mean5d', x:[],y:[]};
+//var ch3data={type:'scatter', mode: 'lines', name:'noise_mean5d', x:[],y:[]};
+//var ch1_1data={type:'scatter', mode: 'lines', name:'noise_1d', x:[],y:[]};
+//var ch2_1data={type:'scatter', mode: 'lines', name:'HWU_1d', x:[],y:[]};
+//var ch3_1data={type:'scatter', mode: 'lines', name:'ICV_1d', x:[],y:[]};
+//
+//
+//  $.each(mean5days[0]['ch1'], function( key, val ) {
+//      labels.push(parseInt(key));
+//          ch1data['x'].push(stripDate(key));
+//          ch1data['y'].push(val);
+//  });
+//
+//  $.each(mean5days[0]['ch2'], function( key, val ) {
+//          ch2data['x'].push(stripDate(key));
+//          ch2data['y'].push(val);
+//  });
+//
+//  $.each(mean5days[0]['ch3'], function( key, val ) {
+//          ch3data['x'].push(stripDate(key));
+//          ch3data['y'].push(val);
+//  });
+//
+//  $.each(latest_day[0]['ch1'], function( key, val ) {
+//      labels.push(parseInt(key));
+//          ch1_1data['x'].push(stripDate(key));
+//          ch1_1data['y'].push(val);
+//  });
+//
+//  $.each(latest_day[0]['ch2'], function( key, val ) {
+//          ch2_1data['x'].push(stripDate(key));
+//          ch2_1data['y'].push(val);
+//  });
+//
+//  $.each(latest_day[0]['ch3'], function( key, val ) {
+//          ch3_1data['x'].push(stripDate(key));
+//          ch3_1data['y'].push(val);
+//  });
+//
+//var plotlydata=[ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data];
+////var plotlydata=[ch1_1data,ch2_1data,ch3_1data];
+////var plotlydata=[ch1data,ch2data,ch3data];
+//const layout = {
+//height: 800,
+//        xaxis: {
+//title: 'timestamp',
+//        },
+//yaxis: {
+//title: "dBFS",
+////range: [-100,-20]
+//       }
+//};
+//Plotly.newPlot('plotlyDiv3',plotlydata,layout);
+////plotPlotly('plotlyDiv3',ch1data,ch2data,ch3data,ch1_1data,ch2_1data,ch3_1data,layout_base);
+//
+//});
 
 </script>
 
