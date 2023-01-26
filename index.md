@@ -9,11 +9,8 @@ title: Astrofili Centesi - Sistema Helios
 
 <div id="plotlyDiv"></div>
 
-FTA e HWU sono le sigle di due trasmettitori NATO:
-
-* FTA è un trasmettitore in Francia nei pressi di Seine-et-Marne
-* HWU è un trasmettitore in Francia nei pressi di Rosnay
-* DCF77 è un trasmettitore in Germania per la diffusione del segnale orario
+HWU, FTA, ICV, ecc... sulla destra del grafico sono
+le sigle dei trasmettitori VLF utilizzati.
 
 ## Dati dell'ultimo mese di registrazione
 
