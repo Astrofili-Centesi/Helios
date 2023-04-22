@@ -1,16 +1,20 @@
 Canale,Freq,Sigla,Città
 ch1,6000,Noise,N.A.
-ch2,21750,HWU_1,Rosnay - FR
+ch2,16000,a1,na
 ch3,19600,GQD_1,Anthorn – UK
 ch4,20270,ICV,Tavolar – IT
-ch5,20900,FTA,Sainte-Assise – FR
+ch5,21750,HWU_1,Rosnay - FR
 ch6,22100,GQD_2,Anthorn – UK
 ch7,22600,HWU_2,Rosnay - FR
 ch8,23400,DHO38,Rhauderfehn Marinefunksendestelle - D
 ch9,24000,NAA,Cutler - USA
 ch10,26700,TBB,Denizköy Bafa - TUR
-ch11,45900,NSY,Niscemi – IT
-ch12,49000,SXA,Marathon – HEL
-ch13,62600,FUG,La Régine – FR
-ch14,73600,CFH,Newport – CAN
-ch15,77500,DCF77,Mainflingen - D
+ch11,29700,ISR,Israele - ISR
+ch12,38500,a2,na
+ch13,44900,a3,na
+ch14,45900,NSY,Niscemi – IT
+ch15,57950,a4,na
+ch16,61600,a5,na
+ch17,61800,RUS,Russia - RUS
+ch18,63850,FTA63,Rosnay - FR
+ch19,77500,DCF77,Mainflingen - D
