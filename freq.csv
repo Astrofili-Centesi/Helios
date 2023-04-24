@@ -1,6 +1,6 @@
 Canale,Freq,Sigla,Città
 ch1,6000,Noise,N.A.
-ch2,16000,a1,na
+ch2,16400,JXN,Novik - NOR
 ch3,19600,GQD_1,Anthorn – UK
 ch4,20270,ICV,Tavolar – IT
 ch5,21750,HWU_1,Rosnay - FR
@@ -10,8 +10,8 @@ ch8,23400,DHO38,Rhauderfehn Marinefunksendestelle - D
 ch9,24000,NAA,Cutler - USA
 ch10,26700,TBB,Denizköy Bafa - TUR
 ch11,29700,ISR,Israele - ISR
-ch12,38500,a2,na
-ch13,44900,a3,na
+ch12,38500,NRK,Grindavik - ISL
+ch13,44900,JJY,Ohtakadoya - JP
 ch14,45900,NSY,Niscemi – IT
 ch15,57950,a4,na
 ch16,61600,a5,na
