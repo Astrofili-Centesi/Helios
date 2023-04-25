@@ -1,20 +1,17 @@
 Canale,Freq,Sigla,Città
-ch1,6000,Noise,N.A.
-ch2,16400,JXN,Novik - NOR
-ch3,19600,GQD_1,Anthorn – UK
-ch4,20270,ICV,Tavolar – IT
-ch5,21750,HWU_1,Rosnay - FR
-ch6,22100,GQD_2,Anthorn – UK
-ch7,22600,HWU_2,Rosnay - FR
-ch8,23400,DHO38,Rhauderfehn Marinefunksendestelle - D
-ch9,24000,NAA,Cutler - USA
-ch10,26700,TBB,Denizköy Bafa - TUR
-ch11,29700,ISR,Israele - ISR
-ch12,37500,NRK,Grindavik - ISL
-ch13,40000,JJY,Ohtakadoya - JP
+ch1,6000,Noise_6k,N.A.
+ch2,11350,Noise_11k,N.A.
+ch3,27200,Noise_27k,N.A.
+ch4,58750,Noise_58k,N.A.
+ch5,89750,Noise_89k,N.A.
+ch6,19600,GQD_1,Anthorn – UK
+ch7,20270,ICV,Tavolar – IT
+ch8,21750,HWU_1,Rosnay - FR
+ch9,22100,GQD_2,Anthorn – UK
+ch10,23400,DHO38,Rhauderfehn Marinefunksendestelle - D
+ch11,24000,NAA,Cutler - USA
+ch12,26700,TBB,Denizköy Bafa - TUR
+ch13,29700,ISR,Israele - ISR
 ch14,45900,NSY,Niscemi – IT
-ch15,57950,a4,na
-ch16,61600,a5,na
-ch17,61800,RUS,Russia - RUS
-ch18,63850,FTA63,Rosnay - FR
-ch19,77500,DCF77,Mainflingen - D
+ch15,63850,FTA63,Rosnay - FR
+ch16,77500,DCF77,Mainflingen - D
