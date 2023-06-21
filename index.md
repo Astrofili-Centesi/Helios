@@ -51,8 +51,7 @@ Il funzionamento di Helios è stato documentato in questo articolo [![DOI](https
 <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-<script src='https://cdn.plot.ly/plotly-2.11.1.min.js'></script>
-
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js" charset="utf-8"></script>
 <script>
 
 
