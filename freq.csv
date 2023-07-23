@@ -1,33 +1,17 @@
 Canale,Freq,Sigla,Città
 ch1,6000,Noise_6k_mag,N.A.
-ch2,6000,Noise_6k_fas,N.A.
-ch3,11350,Noise_11k_mag,N.A.
-ch4,11350,Noise_11k_fas,N.A.
-ch5,27200,Noise_27k_mag,N.A.
-ch6,27200,Noise_27k_fas,N.A.
-ch7,58750,Noise_58k_mag,N.A.
-ch8,58750,Noise_58k_fas,N.A.
-ch9,89750,Noise_89k_mag,N.A.
-ch10,89750,Noise_89k_fas,N.A.
-ch11,19600,GQD_1_mag,Anthorn – UK
-ch12,19600,GQD_1_fas,Anthorn – UK
-ch13,20270,ICV_mag,Tavolar – IT
-ch14,20270,ICV_fas,Tavolar – IT
-ch15,20900,HWU_1_mag,Rosnay - FR
-ch16,20900,HWU_1_fas,Rosnay - FR
-ch17,22100,GQD_2_mag,Anthorn – UK
-ch18,22100,GQD_2_fas,Anthorn – UK
-ch19,23400,DHO38_mag,Rhauderfehn Marinefunksendestelle - D
-ch20,23400,DHO38_fas,Rhauderfehn Marinefunksendestelle - D
-ch21,24000,NAA_mag,Cutler - USA
-ch22,24000,NAA_fas,Cutler - USA
-ch23,26700,TBB_mag,Denizköy Bafa - TUR
-ch24,26700,TBB_fas,Denizköy Bafa - TUR
-ch25,29700,ISR_mag,Israele - ISR
-ch26,29700,ISR_fas,Israele - ISR
-ch27,45900,NSY_mag,Niscemi – IT
-ch28,45900,NSY_fas,Niscemi – IT
-ch29,63850,FTA63_mag,Rosnay - FR
-ch30,63850,FTA63_fas,Rosnay - FR
-ch31,77500,DCF77_mag,Mainflingen - D
-ch32,77500,DCF77_fas,Mainflingen - D
+ch2,11350,Noise_11k_mag,N.A.
+ch3,27200,Noise_27k_mag,N.A.
+ch4,58750,Noise_58k_mag,N.A.
+ch5,89750,Noise_89k_mag,N.A.
+ch6,19600,GQD_1_mag,Anthorn – UK
+ch7,20270,ICV_mag,Tavolar – IT
+ch8,20900,HWU_1_mag,Rosnay - FR
+ch9,22100,GQD_2_mag,Anthorn – UK
+ch10,23400,DHO38_mag,Rhauderfehn Marinefunksendestelle - D
+ch11,24000,NAA_mag,Cutler - USA
+ch12,26700,TBB_mag,Denizköy Bafa - TUR
+ch13,29700,ISR_mag,Israele - ISR
+ch14,45900,NSY_mag,Niscemi – IT
+ch15,63850,FTA63_mag,Rosnay - FR
+ch16,77500,DCF77_mag,Mainflingen - D
