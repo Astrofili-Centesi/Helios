@@ -17,7 +17,7 @@ title: Astrofili Centesi - Sistema Helios
                 <div class="img-responsive-wrapper">
                     <div class="img-responsive">
                         <figure class="img-wrapper">
-                            <img src="{{site.url}}/assets/images/{{post.image}}"></img>
+                            <img src="{{site.baseurl}}/assets/images/{{post.image}}"></img>
                         </figure>
                         <div class="card-calendar d-flex flex-column justify-content-center">
                             <span class="card-date">{{ post.date | date: "%-d" }}</span>
@@ -47,11 +47,11 @@ title: Astrofili Centesi - Sistema Helios
                 <div class="card-body">
                     <h3 class="card-title h5">{{post.title}}</h3>
                     <p class="card-text"></p>
-                    <a class="read-more" href="{{site.url}}{{ post.url }}">
+                    <a class="read-more" href="{{site.baseurl}}{{ post.url }}">
                         <span class="text">{{post.excerpt}}</span>
                         <span class="visually-hidden"></span>
                         <svg class="icon">
-                            <use href="{{site.url}}/assets/svg/sprites.svg#it-arrow-right"></use>
+                            <use href="{{site.baseurl}}/assets/svg/sprites.svg#it-arrow-right"></use>
                         </svg>
                     </a>
                 </div>
@@ -67,13 +67,13 @@ title: Astrofili Centesi - Sistema Helios
   {% if paginator.previous_page %}
     <li class="page-item">
     <a class="page-link" href="{{ paginator.previous_page_path | relative_url }}">
-        <svg class="icon icon-primary"><use href="{{site.url}}/assets/svg/sprites.svg#it-chevron-left"></use></svg>
+        <svg class="icon icon-primary"><use href="{{site.baseurl}}/assets/svg/sprites.svg#it-chevron-left"></use></svg>
         <span class="visually-hidden">Pagina precedente</span>
     </a>
   {% else %}
     <li class="page-item disabled">
       <a class="page-link" href="#">
-        <svg class="icon icon-primary"><use href="{{site.url}}/assets/svg/sprites.svg#it-chevron-left"></use></svg>
+        <svg class="icon icon-primary"><use href="{{site.baseurl}}/assets/svg/sprites.svg#it-chevron-left"></use></svg>
         <span class="visually-hidden">Pagina precedente</span>
       </a>
     </li>
@@ -92,14 +92,14 @@ title: Astrofili Centesi - Sistema Helios
     <li class="page-item">
       <a class="page-link" href="{{ paginator.next_page_path | relative_url }}">
         <span class="visually-hidden">Pagina successiva</span>
-        <svg class="icon icon-primary"><use href="{{site.url}}/assets/svg/sprites.svg#it-chevron-right"></use></svg>
+        <svg class="icon icon-primary"><use href="{{site.baseurl}}/assets/svg/sprites.svg#it-chevron-right"></use></svg>
       </a>
     </li>
   {% else %}
     <li class="page-item disabled">
       <a class="page-link" href="{{ paginator.next_page_path | relative_url }}">
         <span class="visually-hidden">Pagina successiva</span>
-        <svg class="icon icon-primary"><use href="{{site.url}}/assets/svg/sprites.svg#it-chevron-right"></use></svg>
+        <svg class="icon icon-primary"><use href="{{site.baseurl}}/assets/svg/sprites.svg#it-chevron-right"></use></svg>
       </a>
     </li>
   {% endif %}
