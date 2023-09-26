@@ -1,0 +1,277 @@
+---
+layout: default
+title: Astrofili Centesi - Sistema Helios
+---
+
+<h1>Astrofili Centesi - Sistema Helios</h1>
+
+<h2>News</h2>
+
+<div class="row">
+{% for post in paginator.posts %}
+    <div class="col-4">
+        <div class="card wrapper">
+{% if post.image %}
+            <div class="card card-img no-after">
+                <a href="{{ post.url }}">
+                <div class="img-responsive-wrapper">
+                    <div class="img-responsive">
+                        <figure class="img-wrapper">
+                            <img src="/assets/images/{{post.image}}"></img>
+                        </figure>
+                        <div class="card-calendar d-flex flex-column justify-content-center">
+                            <span class="card-date">{{ post.date | date: "%-d" }}</span>
+                            <span class="card-day">{% assign m = post.date | date: "%-m" %}
+{% case m %}
+  {% when '1' %}Gennaio
+  {% when '2' %}Febbraio
+  {% when '3' %}Marzo
+  {% when '4' %}Aprile
+  {% when '5' %}Maggio
+  {% when '6' %}Giugno
+  {% when '7' %}Luglio
+  {% when '8' %}Agosto
+  {% when '9' %}Settembre
+  {% when '10' %}Ottobre
+  {% when '11' %}Novembre
+  {% when '12' %}Dicembre
+{% endcase %}</span>
+                            <span class="card-year">{{ post.date | date: "%Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+                </a>
+{% else %}
+            <div class="card no-after">
+{% endif %}
+                <div class="card-body">
+                    <h3 class="card-title h5">{{post.title}}</h3>
+                    <p class="card-text"></p>
+                    <a class="read-more" href="{{ post.url }}">
+                        <span class="text">{{post.excerpt}}</span>
+                        <span class="visually-hidden"></span>
+                        <svg class="icon">
+                            <use href="/assets/svg/sprites.svg#it-arrow-right"></use>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+<!--end card-->
+{% endfor %}
+
+{% if paginator.total_pages > 1 %}
+<nav class="pagination-wrapper" aria-label="Navigazione delle news">
+  <ul class="pagination">
+  {% if paginator.previous_page %}
+    <li class="page-item">
+    <a class="page-link" href="{{ paginator.previous_page_path | relative_url }}">
+        <svg class="icon icon-primary"><use href="/assets/svg/sprites.svg#it-chevron-left"></use></svg>
+        <span class="visually-hidden">Pagina precedente</span>
+    </a>
+  {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" href="#">
+        <svg class="icon icon-primary"><use href="/assets/svg/sprites.svg#it-chevron-left"></use></svg>
+        <span class="visually-hidden">Pagina precedente</span>
+      </a>
+    </li>
+  {% endif %}
+  {% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+    <li class="page-item"><a class="page-link" aria-current="page" href="#" >{{page}}</a></li>
+    {% elsif page == 1 %}
+    <li class="page-item"><a class="page-link" href="{{ '/' | relative_url }}">{{ page }}</a></li>
+    {% else %}
+    <li class="page-item"><a class="page-link" href="{{ site.paginate_path | relative_url | replace: ':num', page }}">{{ page }}</a></li>
+    {% endif %}
+  {% endfor %}
+
+  {% if paginator.next_page %}
+    <li class="page-item">
+      <a class="page-link" href="{{ paginator.next_page_path | relative_url }}">
+        <span class="visually-hidden">Pagina successiva</span>
+        <svg class="icon icon-primary"><use href="/assets/svg/sprites.svg#it-chevron-right"></use></svg>
+      </a>
+    </li>
+  {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" href="{{ paginator.next_page_path | relative_url }}">
+        <span class="visually-hidden">Pagina successiva</span>
+        <svg class="icon icon-primary"><use href="/assets/svg/sprites.svg#it-chevron-right"></use></svg>
+      </a>
+    </li>
+  {% endif %}
+  </ul>
+</nav>
+{% endif %}
+</div>
+
+<h2>Dati delle ultime 24h di registrazione</h2>
+
+<div id="plotlyDiv"></div>
+
+FTA e HWU sono le sigle di due trasmettitori NATO:
+<ul>
+    <li>FTA è un trasmettitore in Francia nei pressi di Seine-et-Marne</li>
+    <li>HWU è un trasmettitore in Francia nei pressi di Rosnay</li>
+    <li>DCF77 è un trasmettitore in Germania per la diffusione del segnale orario</li>
+</ul>
+
+<h2>Dati dell'ultimo mese di registrazione</h2>
+
+(utilizzare i bottoni o lo slider per navigare)
+
+<div id="plotlyDiv4"></div>
+
+<!-- IN MANUTENZIONE
+## Dati medi degli ultimi 5 giorni di registrazione
+
+<div id="plotlyDiv3"></div>
+-->
+
+<!--
+<h2>Spettrogramma del segnale</h2>
+
+(ultimi 10 secondi)
+<img src="https://raw.githubusercontent.com/Astrofili-Centesi/Helios/main/spectrogram.png" class="center img-fluid"> 
+-->
+
+
+<h2>Il sistema Helios VLF solar telescope</h2>
+
+Helios VLF è uno strumento di tipo ROEON (Rivelatore Onde Elettromagnetiche di Origine Naturale) destinato a raccogliere informazioni sui brillamenti solari, sulle tempeste geomagnetiche, sulle scariche atmosferiche se su tanti altri eventi di origine naturale.
+
+Le sue lunghe "braccia" gli conferiscono un'alta sensibilità che consente di raccogliere dati accurati.
+
+Il sistema si compone di un dipolo a correnti di terra con ampia area di cattura, di un circuito di trattamento del segnale, di un acquisitore, di un sistema di elaborazione matematica del segnale e infine di un logger in grado di archiviare l'intera quantità di dati
+elaborati, che sono poi <a href="https://github.com/Astrofili-Centesi/Helios">resi disponibili su internet</a>.
+
+L'antenna, di 25m, è totalmente interrata, offre una buona sensibilità a fronte di un eccezionale rapporto segnale/rumore ed è completamente invisibile.
+
+L'intero sistema è stato progettato e costruito dagli <a href="https://www.astrofilicentesi.it/">Astrofili Centesi</a>.
+
+Il funzionamento di Helios è stato documentato in questo articolo <a href="https://doi.org/10.5281/zenodo.7097629"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.7097629.svg"/></a>.
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<script src='https://cdn.plot.ly/plotly-2.24.1.min.js' charset="utf-8"></script>
+
+<script>
+
+
+const layout_base = {
+height: 800,
+xaxis: {
+title: 'timestamp'
+       },
+yaxis: {
+title: "dBFS",
+//range: [-100,-20]
+       }
+};
+
+function plotPlotly(divname,channels,layout) {
+var plotlydata=channels;
+Plotly.newPlot(divname,plotlydata, layout);
+}
+
+
+function plotJSON(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+            var labels=[];
+            var channels=[];
+
+            $.each(inputdata, function(channel_name, channel_data) {
+                    var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+                    var ch={
+label: channel_name,
+showLine: true,
+data: []
+};
+
+$.each(channel_data, function( key, val ) {
+    labels.push(parseInt(key));
+    ch['data'].push({'x':parseInt(key),'y':val});
+    chdata['x'].push(new Date(parseInt(key)).toISOString());
+    chdata['y'].push(val);
+    });
+
+channels.push(chdata);
+});
+
+plotPlotly(divname,channels,layout);
+});
+}
+
+plotJSON("{{site.baseurl}}/data/db_latest.json",'plotlyDiv',layout_base);
+
+
+var selectorOptions = {
+
+    buttons: [{
+
+        step: 'day',
+
+        stepmode: 'backward',
+
+        count: 1,
+
+        label: '1d'
+
+    }, {
+
+        step: 'day',
+
+        stepmode: 'backward',
+
+        count: 7,
+
+        label: '1w'
+
+    }, {
+
+        step: 'all',
+
+    }],
+
+};
+
+const layout_slider = {
+height: 800,
+        xaxis: {
+title: 'timestamp',
+       rangeselector: selectorOptions,
+
+       rangeslider: { range: 864000 }
+
+        },
+yaxis: {
+fixedrange: false,
+title: "dBFS",
+//range: [-100,-20]
+       }
+};
+
+plotJSON("{{site.baseurl}}/data/db_latest_month.json", 'plotlyDiv4', layout_slider);
+
+function addZero(i) {
+  if (i < 10) {i = "0" + i}
+  return i;
+}
+
+function stripDate(timestamp)
+{
+    var d = new Date(parseInt(timestamp));
+    return addZero(d.getHours()) + ":" + addZero(d.getMinutes()) + ":" + addZero(d.getSeconds());
+}
+
+
+</script>
+
+
+

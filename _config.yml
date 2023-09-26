@@ -2,3 +2,6 @@
 include: 
   - data
   - assets
+paginate: 3
+plugins:
+  - jekyll-paginate
