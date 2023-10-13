@@ -22,14 +22,13 @@ le sigle dei trasmettitori VLF utilizzati.
 ## Dati medi degli ultimi 5 giorni di registrazione
 
 <div id="plotlyDiv3"></div>
--->
 
 ## Spettrogramma del segnale
 
 (ultimi 10 secondi)
 
 <img src="https://raw.githubusercontent.com/Astrofili-Centesi/Helios/main/spectrogram.png" class="center img-fluid"> 
-
+-->
 
 ## Il sistema Helios VLF solar telescope
 
