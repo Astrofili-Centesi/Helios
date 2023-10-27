@@ -46,7 +46,7 @@ title: Astrofili Centesi - Sistema Helios
 {% endif %}
                 <div class="card-body">
                     <h3 class="card-title h5">{{post.title}}</h3>
-                    <p class="card-text">{{ post.excerpt }}</p>
+                    <p class="card-text">{{ post.excerpt | truncate: 40 }}</p>
                     <a class="read-more" href="{{site.baseurl}}{{ post.url }}">
                         <span class="text">Leggi di più</span>
                         <span class="visually-hidden">su {{ post.excerpt }}</span>
