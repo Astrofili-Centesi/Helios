@@ -4,7 +4,7 @@ ch2,11350,Noise_11k_mag,N.A.
 ch3,27200,Noise_27k_mag,N.A.
 ch4,58750,Noise_58k_mag,N.A.
 ch5,89750,Noise_89k_mag,N.A.
-ch6,19600,GQD_1_mag,Anthorn – UK
+ch6,16400,JXN,Glideskal – Nor
 ch7,20270,ICV_mag,Tavolar – IT
 ch8,20900,HWU_1_mag,Rosnay - FR
 ch9,22100,GQD_2_mag,Anthorn – UK
@@ -15,3 +15,4 @@ ch13,29700,ISR_mag,Israele - ISR
 ch14,45900,NSY_mag,Niscemi – IT
 ch15,63850,FTA63_mag,Rosnay - FR
 ch16,77500,DCF77_mag,Mainflingen - D
+ch17,100000,Total RMS,NA
