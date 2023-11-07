@@ -40,7 +40,7 @@ dYesterday=dYesterday.resample('60s').mean()
 dYesterday.fillna(method='ffill').to_json(f_dday)
 
 # Salva un file con l'ultimo mese
-lastMonthFrom = lastTime - pd.DateOffset(months=1)
+lastMonthFrom = lastTime - pd.DateOffset(months=2)
 dlastMonth=d[d.index>=lastMonthFrom]
 
 logging.info("last month from {} to {}".format(dlastMonth.index[0],dlastMonth.index[-1]))
