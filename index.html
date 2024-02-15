@@ -112,8 +112,10 @@ title: Astrofili Centesi - Sistema Helios
 
 <div id="plotlyDiv"></div>
 
+<h2>Magnetometro (ultime 48h)</h2>
 
-    
+<div id="magnetDiv"></div>
+
 <h2>Ultimi due mesi di registrazione</h2>
 
 (utilizzare i bottoni o lo slider per navigare)
@@ -170,41 +172,82 @@ title: "dBFS",
        }
 };
 
+const layout_magnet = {
+height: 800,
+xaxis: {
+title: 'timestamp'
+       },
+yaxis: {
+title: "uT",
+//range: [-100,-20]
+       }
+};
+
 function plotPlotly(divname,channels,layout) {
-var plotlydata=channels;
-Plotly.newPlot(divname,plotlydata, layout);
+    var plotlydata=channels;
+    Plotly.newPlot(divname,plotlydata, layout);
 }
 
 
 function plotJSON(filename,divname,layout) {
     $.getJSON( filename, function( inputdata ) {
-            var labels=[];
-            var channels=[];
+        var labels=[];
+        var channels=[];
 
-            $.each(inputdata, function(channel_name, channel_data) {
-                    var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
-                    var ch={
-label: channel_name,
-showLine: true,
-data: []
-};
+        $.each(inputdata, function(channel_name, channel_data) {
+            var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+            var ch={
+                label: channel_name,
+                showLine: true,
+                data: []
+            };
 
-$.each(channel_data, function( key, val ) {
-    labels.push(parseInt(key));
-    ch['data'].push({'x':parseInt(key),'y':val});
-    chdata['x'].push(new Date(parseInt(key)).toISOString());
-    chdata['y'].push(val);
+            $.each(channel_data, function( key, val ) {
+                labels.push(parseInt(key));
+                ch['data'].push({'x':parseInt(key),'y':val});
+                chdata['x'].push(new Date(parseInt(key)).toISOString());
+                chdata['y'].push(val);
+            });
+
+            channels.push(chdata);
+        });
+
+        plotPlotly(divname,channels,layout);
     });
+}
 
-channels.push(chdata);
-});
+function plotJSONMagnet(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+        var labels=[];
+        var channels=[];
 
-plotPlotly(divname,channels,layout);
-});
+        $.each(inputdata, function(channel_name, channel_data) {
+            if (channel_name=="magnet") {
+                var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+                var ch={
+                    label: channel_name,
+                    showLine: true,
+                    data: []
+                };
+
+                $.each(channel_data, function( key, val ) {
+                    labels.push(key);
+                    ch['data'].push({'x':key,'y':val});
+                    chdata['x'].push(key);
+                    chdata['y'].push(val);
+                });
+
+                channels.push(chdata);
+            }
+        }
+        );
+        plotPlotly(divname,channels,layout);
+    });
 }
 
 plotJSON("{{site.baseurl}}/data/db_latest.json",'plotlyDiv',layout_base);
 
+plotJSONMagnet("https://raw.githubusercontent.com/Astrofili-Centesi/Magnet/main/data/48h.json",'magnetDiv',layout_magnet);
 
 var selectorOptions = {
 
