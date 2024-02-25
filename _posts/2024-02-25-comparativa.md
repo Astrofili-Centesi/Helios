@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Comparativa Helios Goes16"
+title:  "Comparativa Helios e gli strumenti ufficiali"
 image: 2024-02-25-comparativa.png
 ---
 
