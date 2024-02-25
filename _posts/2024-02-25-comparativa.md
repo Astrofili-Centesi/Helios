@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Comparativa Helios Goes16"
-image: 2023-12-20-comparativa.png
+image: 2024-02-25-comparativa.png
 ---
 
 In questa breve sequenza di brillamenti Helios ha mostrato la sua incredibile sensibilita.
