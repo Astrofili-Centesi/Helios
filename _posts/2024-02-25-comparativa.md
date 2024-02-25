@@ -4,6 +4,6 @@ title:  "Comparativa Helios Goes16"
 image: 2024-02-25-comparativa.png
 ---
 
-In questa breve sequenza di brillamenti Helios ha mostrato la sua incredibile sensibilita.
-Si nota una certa coerenza dell'andamento del grafico di Helios (sotto) con il Goes16 (sopra).
-Nella sequenza anche la piccola variazone indicata con la freccia blu è stata captata.
+Dopo quasi due anni di funzionamento Helios si è evoluto diventando una stazione di space weather
+in grado di registrare i brillamenti del Sole, i movimenti della ionosfera e l'andamento del campo magnetico terrestre.
+Nei grafici si puo vedere come sia forte la correlazione tra i dati misurati da Helios e dagli strumenti ufficiali.
