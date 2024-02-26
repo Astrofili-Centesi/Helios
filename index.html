@@ -109,9 +109,12 @@ title: Astrofili Centesi - Sistema Helios
 </div>
 
 <h2>Ultime 24h di registrazione</h2>
-
+<h3>HELIOS</h3>
 <div id="plotlyDiv"></div>
 
+<h3>GOES-16</h3>
+<a href="https://www.swpc.noaa.gov/products/goes-x-ray-flux">https://www.swpc.noaa.gov/products/goes-x-ray-flux</a>
+<div id="plotlyDivGOES"></div>
 <h2>Magnetometro (ultime 48h)</h2>
 
 <div id="magnetDiv"></div>
@@ -216,6 +219,35 @@ function plotJSON(filename,divname,layout) {
     });
 }
 
+function plotGOES(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+        var labels=[];
+        var channels=[];
+        var chdata={type:'scatter', mode: 'lines', name:"GOES-16", x:[],y:[]};
+        var ch={
+            label: "GOES-16",
+            showLine: true,
+            data: []
+        };
+
+        $.each(inputdata, function(key,val) {
+            if (val["energy"]=="0.05-0.4nm") {
+                x=val["time_tag"];
+                y=val["flux"];
+                labels.push(x);
+            ch['data'].push({'x':x,'y':y});
+                chdata['x'].push(x);
+                chdata['y'].push(y);
+            }
+        }
+        );
+
+            channels.push(chdata);
+
+        plotPlotly(divname,channels,layout);
+    });
+}
+
 function plotJSONMagnet(filename,divname,layout) {
     $.getJSON( filename, function( inputdata ) {
         var labels=[];
@@ -295,7 +327,24 @@ title: "dBFS",
        }
 };
 
+const layout_GOES = {
+height: 400,
+        xaxis: {
+title: 'timestamp',
+
+       rangeslider: { range: 864000 }
+
+        },
+yaxis: {
+fixedrange: false,
+title: "",
+//range: [-100,-20]
+       }
+};
+
 plotJSON("{{site.baseurl}}/data/db_latest_month.json", 'plotlyDiv4', layout_slider);
+
+plotGOES("https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json", 'plotlyDivGOES', layout_GOES);
 
 function addZero(i) {
   if (i < 10) {i = "0" + i}
