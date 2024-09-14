@@ -4,6 +4,12 @@
     <title>Signal Analysis</title>
     <!-- Include Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Set the plot div to have a minimum height of 50% of the viewport */
+        #plot {
+            min-height: 75vh;
+        }
+    </style>
 </head>
 <body>
     <h1>Signal Analysis</h1>
@@ -40,9 +46,9 @@
         var traceIndicesBySignal = {}; // Mapping from signalName to its trace indices
         var layout = {}; // Global layout variable
 
-        // Function to load data from 'db_latest.json'
+        // Function to load data from 'data/db_latest_day.json'
         function loadData() {
-            fetch('https://raw.githubusercontent.com/Astrofili-Centesi/Helios/gh-pages/data/db_latest_day.json')
+            fetch('data/db_latest_day.json')
                 .then(function(response) {
                     if (!response.ok) {
                         throw new Error('Network response was not ok ' + response.statusText);
