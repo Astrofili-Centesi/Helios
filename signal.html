@@ -5,9 +5,9 @@
     <!-- Include Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        /* Set the plot div to have a minimum height of 50% of the viewport */
+        /* Set the plot div to have a height of 50% of the viewport */
         #plot {
-            min-height: 75vh;
+            height: 50vh;
         }
     </style>
 </head>
@@ -32,6 +32,18 @@
 
         <label for="min_channels">Minimum Channels:</label>
         <input type="number" id="min_channels" value="1" step="1" min="1">
+
+        <br><br>
+
+        <!-- New parameters for the high-pass filter -->
+        <label for="enable_filter">High Pass Filter:</label>
+        <input type="checkbox" id="enable_filter">
+
+        <label for="short_window">Short Moving Average (minutes):</label>
+        <input type="number" id="short_window" value="5" step="1" min="1">
+
+        <label for="long_window">Long Moving Average (minutes):</label>
+        <input type="number" id="long_window" value="30" step="1" min="1">
     </div>
 
     <!-- Plot area -->
@@ -272,7 +284,7 @@
         }
 
         // Process data function
-        function processData(data, n_hours, smooth_window, prominence, correlation_threshold, correlation_window, min_channels) {
+        function processData(data, n_hours, smooth_window, prominence, correlation_threshold, correlation_window, min_channels, enable_filter, short_window, long_window) {
             // Find the maximum timestamp in the data
             var maxTimestamp = 0;
             var minTimestamp = Infinity;
@@ -329,6 +341,22 @@
 
                 // Resample data at 1-minute intervals using linear interpolation
                 var resampledValues = resampleData(times, values, resampleTimes);
+
+                // Apply high-pass filter if enabled
+                if (enable_filter) {
+                    var shortMA = movingAverage(resampledValues, Math.max(short_window, 1));
+                    var longMA = movingAverage(resampledValues, Math.max(long_window, 1));
+
+                    var filteredValues = [];
+                    for (var i = 0; i < resampledValues.length; i++) {
+                        if (longMA[i] !== 0) {
+                            filteredValues.push(shortMA[i] / longMA[i]);
+                        } else {
+                            filteredValues.push(0);
+                        }
+                    }
+                    resampledValues = filteredValues;
+                }
 
                 // Normalization
                 var meanValue = mean(resampledValues);
@@ -478,10 +506,11 @@
                 yaxis: {
                     title: 'Smoothed Normalized Value'
                 },
-                hovermode: 'closest' // Set hovermode to 'closest' to reduce interference
+                hovermode: 'closest',
+                height: document.getElementById('plot').clientHeight // Set layout height to match the plot div's height
             };
 
-            Plotly.newPlot('plot', fullTraces, layout);
+            Plotly.newPlot('plot', fullTraces, layout, { responsive: true });
 
             // Reattach the click event handler after plot is created or updated
             attachClickHandler();
@@ -496,8 +525,24 @@
             var correlation_window = parseFloat(document.getElementById('correlation_window').value);
             var min_channels = parseInt(document.getElementById('min_channels').value);
 
+            // Get the new filter parameters
+            var enable_filter = document.getElementById('enable_filter').checked;
+            var short_window = parseInt(document.getElementById('short_window').value);
+            var long_window = parseInt(document.getElementById('long_window').value);
+
             currentGroupIndex = null; // Reset current group
-            var processedData = processData(data, n_hours, smooth_window, prominence, correlation_threshold, correlation_window, min_channels);
+            var processedData = processData(
+                data,
+                n_hours,
+                smooth_window,
+                prominence,
+                correlation_threshold,
+                correlation_window,
+                min_channels,
+                enable_filter,
+                short_window,
+                long_window
+            );
 
             plotData(processedData);
         }
@@ -574,6 +619,11 @@
             document.getElementById('correlation_threshold').addEventListener('input', updatePlot);
             document.getElementById('correlation_window').addEventListener('input', updatePlot);
             document.getElementById('min_channels').addEventListener('input', updatePlot);
+
+            // Attach event listeners for the new filter parameters
+            document.getElementById('enable_filter').addEventListener('change', updatePlot);
+            document.getElementById('short_window').addEventListener('input', updatePlot);
+            document.getElementById('long_window').addEventListener('input', updatePlot);
         }
 
         // Load data and initialize
