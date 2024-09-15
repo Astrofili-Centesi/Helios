@@ -7,7 +7,7 @@
     <style>
         /* Set the plot div to have a height of 50% of the viewport */
         #plot {
-            height: 50vh;
+            height: 75vh;
         }
     </style>
 </head>
@@ -31,7 +31,7 @@
         <input type="number" id="correlation_window" value="15" step="1" min="1">
 
         <label for="min_channels">Minimum Channels:</label>
-        <input type="number" id="min_channels" value="1" step="1" min="1">
+        <input type="number" id="min_channels" value="3" step="1" min="1">
 
         <br><br>
 
@@ -58,9 +58,9 @@
         var traceIndicesBySignal = {}; // Mapping from signalName to its trace indices
         var layout = {}; // Global layout variable
 
-        // Function to load data from 'data/db_latest_day.json'
+        // Function to load data from 'data/db_latest.json'
         function loadData() {
-            fetch('data/db_latest_day.json')
+            fetch('data/db_latest.json') // Updated file path
                 .then(function(response) {
                     if (!response.ok) {
                         throw new Error('Network response was not ok ' + response.statusText);
@@ -77,26 +77,21 @@
                 });
         }
 
-        // Moving average function
-        function movingAverage(values, windowSize) {
+        // Centered moving average function
+        function centeredMovingAverage(values, windowSize) {
             var result = [];
-            var sum = 0;
-            var count = 0;
-            var window = [];
+            var halfWindow = Math.floor(windowSize / 2);
 
             for (var i = 0; i < values.length; i++) {
-                window.push(values[i]);
-                sum += values[i];
-                count += 1;
-
-                if (count > windowSize) {
-                    sum -= window.shift();
-                    count -= 1;
+                var start = Math.max(0, i - halfWindow);
+                var end = Math.min(values.length - 1, i + halfWindow);
+                var count = end - start + 1;
+                var sum = 0;
+                for (var j = start; j <= end; j++) {
+                    sum += values[j];
                 }
-
                 result.push(sum / count);
             }
-
             return result;
         }
 
@@ -291,7 +286,7 @@
             for (var signalName in data) {
                 var signalData = data[signalName];
                 for (var timestamp in signalData) {
-                    var time = parseInt(timestamp);
+                    var time = parseInt(timestamp); // Timestamps are in milliseconds
                     if (time > maxTimestamp) {
                         maxTimestamp = time;
                     }
@@ -319,7 +314,7 @@
                 var values = [];
 
                 for (var timestamp in signalData) {
-                    var time = parseInt(timestamp);
+                    var time = parseInt(timestamp); // Timestamps are in milliseconds
                     var value = signalData[timestamp];
 
                     if (time >= earliestTime && time <= latestTime) {
@@ -344,8 +339,8 @@
 
                 // Apply high-pass filter if enabled
                 if (enable_filter) {
-                    var shortMA = movingAverage(resampledValues, Math.max(short_window, 1));
-                    var longMA = movingAverage(resampledValues, Math.max(long_window, 1));
+                    var shortMA = centeredMovingAverage(resampledValues, Math.max(short_window, 1));
+                    var longMA = centeredMovingAverage(resampledValues, Math.max(long_window, 1));
 
                     var filteredValues = [];
                     for (var i = 0; i < resampledValues.length; i++) {
@@ -365,9 +360,9 @@
                     return ((v - meanValue) / stdValue) + (-50);
                 });
 
-                // Apply moving average to normalized values
+                // Apply centered moving average to normalized values
                 var smooth_window_samples = Math.max(Math.floor(smooth_window), 1); // Ensure at least window size of 1
-                var smoothedValues = movingAverage(normalizedValues, smooth_window_samples);
+                var smoothedValues = centeredMovingAverage(normalizedValues, smooth_window_samples);
 
                 // Find peaks in smoothed normalized values
                 var peaks = findPeaks(smoothedValues, prominence);
@@ -398,13 +393,23 @@
 
             var traceIndex = 0;
 
+            // Variables to store min and max Y values
+            var minY = Infinity;
+            var maxY = -Infinity;
+
             for (var signalName in signals) {
                 var signal = signals[signalName];
 
                 var times = signal.times.map(function(time) {
-                    return new Date(time);
+                    return new Date(time).toISOString(); // Convert to ISO string in UTC
                 });
                 var values = signal.values;
+
+                // Update minY and maxY
+                for (var i = 0; i < values.length; i++) {
+                    if (values[i] < minY) minY = values[i];
+                    if (values[i] > maxY) maxY = values[i];
+                }
 
                 // Signal line trace with metadata
                 var trace = {
@@ -463,11 +468,15 @@
                 var color = colors[i % colors.length];
                 groupMappings[i] = []; // Initialize group mapping
 
+                var timesInGroup = [];
+
                 for (var signalName in group) {
                     var index = group[signalName];
                     var signal = signals[signalName];
-                    var time = new Date(signal.times[index]);
+                    var time = new Date(signal.times[index]).toISOString();
                     var value = signal.values[index];
+
+                    timesInGroup.push(signal.times[index]); // Collect times for average
 
                     // Group peak trace with metadata
                     var groupTrace = {
@@ -496,12 +505,43 @@
                     groupMappings[i].push(traceIndex);
                     traceIndex++;
                 }
+
+                // Compute average time for the group
+                var avgTimeValue = timesInGroup.reduce(function(a, b) { return a + b; }, 0) / timesInGroup.length;
+                var avgTime = new Date(avgTimeValue).toISOString();
+
+                // Add vertical line trace at average time
+                var lineTrace = {
+                    x: [avgTime, avgTime],
+                    y: [minY, maxY],
+                    mode: 'lines',
+                    line: {
+                        color: 'red',
+                        dash: 'dash',
+                        width: 2
+                    },
+                    name: 'Group ' + (i + 1) + ' Avg Time',
+                    showlegend: false,
+                    hoverinfo: 'text',
+                    text: 'Group ' + (i + 1) + '<br>Avg Time: ' + avgTime,
+                    meta: {
+                        groupIndex: i,
+                        traceType: 'groupAvgTime'
+                    }
+                };
+
+                fullTraces.push(lineTrace);
+                groupMappings[i].push(traceIndex);
+                traceIndex++;
             }
 
             layout = {
                 title: 'Signals',
                 xaxis: {
-                    title: 'Time'
+                    title: 'Time (UTC)',
+                    type: 'date',
+                    tickformat: '%Y-%m-%d %H:%M UTC',
+                    hoverformat: '%Y-%m-%d %H:%M UTC'
                 },
                 yaxis: {
                     title: 'Smoothed Normalized Value'
@@ -556,18 +596,31 @@
                     var point = data.points[0];
                     var pointMeta = point.fullData.meta;
 
-                    if (pointMeta && pointMeta.traceType === 'groupPeak') {
+                    if (pointMeta && (pointMeta.traceType === 'groupPeak' || pointMeta.traceType === 'groupAvgTime')) {
                         var groupIndex = parseInt(pointMeta.groupIndex);
 
                         if (currentGroupIndex === groupIndex) {
                             // If already filtered by this group, reset to full view
                             currentGroupIndex = null;
-                            // Set all traces to visible
+                            // Set all signal traces to visible
                             var update = {
                                 visible: []
                             };
                             for (var i = 0; i < fullTraces.length; i++) {
-                                update.visible.push(true);
+                                var traceMeta = fullTraces[i].meta;
+                                if (traceMeta) {
+                                    if (traceMeta.traceType === 'signalLine' || traceMeta.traceType === 'signalPeaks') {
+                                        update.visible.push(true);
+                                    } else if (traceMeta.traceType === 'groupAvgTime') {
+                                        update.visible.push(true); // Keep all vertical lines visible
+                                    } else if (traceMeta.traceType === 'groupPeak') {
+                                        update.visible.push(true); // Keep group peaks visible
+                                    } else {
+                                        update.visible.push(false);
+                                    }
+                                } else {
+                                    update.visible.push(false);
+                                }
                             }
                             Plotly.restyle('plot', update);
                         } else {
@@ -591,8 +644,20 @@
                             for (var i = 0; i < fullTraces.length; i++) {
                                 var traceMeta = fullTraces[i].meta;
                                 if (traceMeta) {
-                                    if (groupSignals[traceMeta.signalName]) {
+                                    if (traceMeta.traceType === 'groupAvgTime') {
+                                        if (traceMeta.groupIndex === groupIndex) {
+                                            update.visible.push(true); // Keep the selected group's vertical line visible
+                                        } else {
+                                            update.visible.push(true); // Keep other groups' vertical lines visible
+                                        }
+                                    } else if (groupSignals[traceMeta.signalName]) {
                                         update.visible.push(true);
+                                    } else if (traceMeta.traceType === 'groupPeak') {
+                                        if (traceMeta.groupIndex === groupIndex) {
+                                            update.visible.push(true); // Keep group peaks of the selected group visible
+                                        } else {
+                                            update.visible.push(false); // Hide other group peaks
+                                        }
                                     } else {
                                         update.visible.push('legendonly');
                                     }
