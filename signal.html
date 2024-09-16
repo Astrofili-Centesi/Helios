@@ -74,6 +74,8 @@
         var originalLayout;
         var currentGroupIndex = null;
         var groups = []; // Global variable to store groups
+        var goesData = []; // Store GOES data globally
+
 
         // Ensure all operations happen after the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', function () {
@@ -89,8 +91,34 @@
                 })
                 .catch(error => console.error('Error loading data:', error));
         }
+        function resampleGOESData(resampleTimes) {
+            const times = goesData.map(d => new Date(d.time_tag).getTime());
+            const fluxes = goesData.map(d => 10 * Math.log10(d.flux));  // Convert GOES flux to dB
+            const resampledValues = resampleData(times, fluxes, resampleTimes);
+            console.log(resampledValues);
+            var meanValue = mean(resampledValues);
+            console.log(meanValue);
+        var stdValue = standardDeviation(resampledValues, meanValue);
+        var normalizedValues = resampledValues.map(function(v) {
+            return ((v - meanValue) /stdValue) + (-60);
+        });
+        console.log(normalizedValues);
+        return normalizedValues;
+        }
+        async function fetchGOESData() {
+            const url = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json";
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                goesData = data.filter(item => item.energy === "0.05-0.4nm");  // Filter for the correct energy range
+            } catch (error) {
+                console.error("Error fetching GOES X-ray data:", error);
+            }
+        }
 
-function initializePlot() {
+async function initializePlot() {
+    await fetchGOESData(); // Fetch GOES data once during initialization
+
     updatePlot();
 
     // Attach event listeners for inputs
@@ -169,6 +197,23 @@ function initializePlot() {
             }
         });
     }
+
+
+            // Add GOES data to the plot
+            const resampledGOESFlux = resampleGOESData(processedData.signals[Object.keys(processedData.signals)[0]].times);
+            fullTraces.push({
+                x: processedData.signals[Object.keys(processedData.signals)[0]].times.map(t => new Date(t).toISOString()),
+                y: resampledGOESFlux,
+                mode: 'lines',
+                name: 'GOES Flux (0.05-0.4nm) [dB]',
+                hoverinfo: 'name+x+y',
+                line: { color: 'orange' },
+                showlegend: true,
+                meta: {
+                    signalName: 'GOESFlux',
+                    traceType: 'signalLine'
+                }
+            });
 
     // Plot group peaks and average times
     var colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'black', 'grey'];
@@ -484,21 +529,28 @@ function centeredMovingAverage(values, windowSize) {
     return result;
 }
 
-// Mean calculation function
+// Mean calculation function that handles NaN, Infinity, and -Infinity
 function mean(values) {
-    var sum = values.reduce(function(a, b) { return a + b; }, 0);
-    return sum / values.length;
+    const filteredValues = values.filter(v => isFinite(v)); // Remove NaN, Infinity, and -Infinity values
+    if (filteredValues.length === 0) return NaN; // Return NaN if all values were NaN or Infinity
+    const sum = filteredValues.reduce((a, b) => a + b, 0);
+    return sum / filteredValues.length;
 }
 
-// Standard deviation function
+// Standard deviation function that handles NaN, Infinity, and -Infinity
 function standardDeviation(values, meanValue) {
-    var squareDiffs = values.map(function(value) {
-        var diff = value - meanValue;
+    const filteredValues = values.filter(v => isFinite(v)); // Remove NaN, Infinity, and -Infinity values
+    if (filteredValues.length === 0) return NaN; // Return NaN if all values were NaN or Infinity
+    
+    const squareDiffs = filteredValues.map(value => {
+        const diff = value - meanValue;
         return diff * diff;
     });
-    var avgSquareDiff = mean(squareDiffs);
+    
+    const avgSquareDiff = mean(squareDiffs); // Use the modified mean function
     return Math.sqrt(avgSquareDiff);
 }
+
 
 // Modified findPeaks function
 function findPeaks(values, prominence) {
