@@ -6,11 +6,24 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         #plot {
-            height: 75vh;
+            height: 50vh;
         }
         #backButton {
             display: none;
             margin-top: 10px;
+        }
+    </style>
+    <style>
+        #zoomed_plots {
+            display: flex;
+            overflow-x: auto;
+            height: 30vh; /* Fixed height to ensure square aspect ratio */
+        }
+        .zoomed_plot {
+            flex: 0 0 auto; /* Prevent shrinking */
+            width: 30vh; /* Same width as height for square plot */
+            height: 30vh; /* Fixed height for square plot */
+            margin: 5px;
         }
     </style>
 </head>
@@ -48,6 +61,7 @@
     </div>
 
     <div id="plot"></div>
+<div id="zoomed_plots"></div>
 
     <button id="backButton" onclick="returnToFullPlot()">Back to Full Plot</button>
 
@@ -59,6 +73,7 @@
         var layout = {};
         var originalLayout;
         var currentGroupIndex = null;
+        var groups = []; // Global variable to store groups
 
         // Ensure all operations happen after the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', function () {
@@ -75,20 +90,23 @@
                 .catch(error => console.error('Error loading data:', error));
         }
 
-        function initializePlot() {
-            updatePlot();
+function initializePlot() {
+    updatePlot();
 
-            // Attach event listeners for inputs
-            document.getElementById('n_hours').addEventListener('input', updatePlot);
-            document.getElementById('smooth_window').addEventListener('input', updatePlot);
-            document.getElementById('prominence').addEventListener('input', updatePlot);
-            document.getElementById('correlation_threshold').addEventListener('input', updatePlot);
-            document.getElementById('correlation_window').addEventListener('input', updatePlot);
-            document.getElementById('min_channels').addEventListener('input', updatePlot);
-            document.getElementById('enable_filter').addEventListener('change', updatePlot);
-            document.getElementById('short_window').addEventListener('input', updatePlot);
-            document.getElementById('long_window').addEventListener('input', updatePlot);
-        }
+    // Attach event listeners for inputs
+    document.getElementById('n_hours').addEventListener('input', updatePlot);
+    document.getElementById('smooth_window').addEventListener('input', updatePlot);
+    document.getElementById('prominence').addEventListener('input', updatePlot);
+    document.getElementById('correlation_threshold').addEventListener('input', updatePlot);
+    document.getElementById('correlation_window').addEventListener('input', updatePlot);
+    document.getElementById('min_channels').addEventListener('input', updatePlot);
+    document.getElementById('enable_filter').addEventListener('change', updatePlot);
+    document.getElementById('short_window').addEventListener('input', updatePlot);
+    document.getElementById('long_window').addEventListener('input', updatePlot);
+
+    
+}
+
 
         function updatePlot() {
             var n_hours = parseFloat(document.getElementById('n_hours').value);
@@ -118,125 +136,215 @@
         }
 
         function plotData(processedData) {
-            var signals = processedData.signals;
-            var groups = processedData.groups;
-            fullTraces = [];
-            groupMappings = {};
-            groupAverageTimes = {};
+    var signals = processedData.signals;
+    groups = processedData.groups;  // Store processed groups globally
 
-            var minY = Infinity;
-            var maxY = -Infinity;
+    fullTraces = [];
+    groupMappings = {};
+    groupAverageTimes = {};
 
-            for (var signalName in signals) {
-                var signal = signals[signalName];
-                var times = signal.times.map(t => new Date(t).toISOString());
-                var values = signal.values;
+    var minY = Infinity;
+    var maxY = -Infinity;
 
-                for (var i = 0; i < values.length; i++) {
-                    if (values[i] < minY) minY = values[i];
-                    if (values[i] > maxY) maxY = values[i];
-                }
-
-                fullTraces.push({
-                    x: times,
-                    y: values,
-                    mode: 'lines',
-                    name: signalName,
-                    hoverinfo: 'name+x+y',
-                    showlegend: true
-                });
-            }
-
-            // Plot group peaks and vertical lines for average time of each group
-            var colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'black', 'grey'];
-            for (var i = 0; i < groups.length; i++) {
-    var group = groups[i];
-    var color = colors[i % colors.length];
-    groupMappings[i] = [];
-
-    var timesInGroup = [];
-    var groupScore = group.score; // Retrieve the group score
-
-    for (var signalName in group) {
-        if (signalName === 'score') continue; // Skip the score key
-        var index = group[signalName];
+    for (var signalName in signals) {
         var signal = signals[signalName];
-        var time = new Date(signal.times[index]).toISOString();
-        var value = signal.values[index];
+        var times = signal.times.map(t => new Date(t).toISOString());
+        var values = signal.values;
 
-        timesInGroup.push(signal.times[index]);
+        for (var i = 0; i < values.length; i++) {
+            if (values[i] < minY) minY = values[i];
+            if (values[i] > maxY) maxY = values[i];
+        }
 
         fullTraces.push({
-            x: [time],
-            y: [value],
-            mode: 'markers',
-            marker: {
-                symbol: 'diamond',
-                size: 10,
-                color: color
-            },
-            name: 'Group ' + (i + 1),
-            legendgroup: 'Group ' + (i + 1),
-            showlegend: false,
-            hoverinfo: 'text+x+y',
-            text: 'Group ' + (i + 1) + ' (Score: ' + groupScore.toFixed(2) + ')',
-            customdata: { groupIndex: i },
+            x: times,
+            y: values,
+            mode: 'lines',
+            name: signalName,
+            hoverinfo: 'name+x+y',
+            showlegend: true,
             meta: {
                 signalName: signalName,
-                traceType: 'groupPeak',
-                groupIndex: i
+                traceType: 'signalLine'
             }
         });
     }
 
-    var avgTimeValue = timesInGroup.reduce(function(a, b) { return a + b; }, 0) / timesInGroup.length;
-    var avgTime = new Date(avgTimeValue).toISOString();
-    groupAverageTimes[i] = avgTime;
+    // Plot group peaks and average times
+    var colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'black', 'grey'];
+    for (var i = 0; i < groups.length; i++) {
+        var group = groups[i];
+        var color = colors[i % colors.length];
+        groupMappings[i] = [];
 
-    // Add vertical line for group average time
-    fullTraces.push({
-        x: [avgTime, avgTime],
-        y: [minY, maxY],
-        mode: 'lines',
-        line: {
-            color: 'red',
-            dash: 'dash',
-            width: 2
-        },
-        name: 'Group ' + (i + 1) + ' Avg Time',
-        showlegend: false,
-        hoverinfo: 'text',
-        text: 'Group ' + (i + 1) + ' Avg Time: ' + avgTime + ' (Score: ' + groupScore.toFixed(2) + ')',
-        meta: {
-            groupIndex: i,
-            traceType: 'groupAvgTime'
+        var timesInGroup = [];
+        var groupScore = group.score; // Retrieve the group score
+
+        for (var signalName in group) {
+            if (signalName === 'score') continue; // Skip the score key
+            var index = group[signalName];
+            var signal = signals[signalName];
+            var time = new Date(signal.times[index]).toISOString();
+            var value = signal.values[index];
+
+            timesInGroup.push(signal.times[index]);
+
+            fullTraces.push({
+                x: [time],
+                y: [value],
+                mode: 'markers',
+                marker: {
+                    symbol: 'diamond',
+                    size: 10,
+                    color: color
+                },
+                name: 'Group ' + (i + 1),
+                legendgroup: 'Group ' + (i + 1),
+                showlegend: false,
+                hoverinfo: 'text+x+y',
+                text: 'Group ' + (i + 1) + ' (Score: ' + groupScore.toFixed(2) + ')',
+                customdata: { groupIndex: i },
+                meta: {
+                    signalName: signalName,
+                    traceType: 'groupPeak',
+                    groupIndex: i
+                }
+            });
         }
-    });
+
+        var avgTimeValue = timesInGroup.reduce(function(a, b) { return a + b; }, 0) / timesInGroup.length;
+        var avgTime = new Date(avgTimeValue).toISOString();
+        groupAverageTimes[i] = avgTime;
+
+        // Add vertical line for group average time
+        fullTraces.push({
+            x: [avgTime, avgTime],
+            y: [minY, maxY],
+            mode: 'lines',
+            line: {
+                color: 'red',
+                dash: 'dash',
+                width: 2
+            },
+            name: 'Group ' + (i + 1) + ' Avg Time',
+            showlegend: false,
+            hoverinfo: 'text',
+            text: 'Group ' + (i + 1) + ' Avg Time: ' + avgTime + ' (Score: ' + groupScore.toFixed(2) + ')',
+            meta: {
+                groupIndex: i,
+                traceType: 'groupAvgTime'
+            }
+        });
+    }
+
+    layout = {
+        title: 'Signals',
+        xaxis: {
+            title: 'Time (UTC)',
+            type: 'date',
+            tickformat: '%Y-%m-%d %H:%M UTC',
+            hoverformat: '%Y-%m-%d %H:%M UTC'
+        },
+        yaxis: { title: 'Smoothed Normalized Value' },
+        hovermode: 'closest'
+    };
+
+    // Plot the main full plot
+    Plotly.newPlot('plot', fullTraces, layout, { responsive: true })
+        .then(() => {
+            attachClickHandler(); // Attach click handler after rendering
+            plotGroupZooms(groups,processedData); // Static call to plotGroupZooms for top 5 groups
+        })
+        .catch(error => {
+            console.error('Plot rendering error:', error);
+        });
 }
 
 
-            layout = {
-                title: 'Signals',
-                xaxis: {
-                    title: 'Time (UTC)',
-                    type: 'date',
-                    tickformat: '%Y-%m-%d %H:%M UTC',
-                    hoverformat: '%Y-%m-%d %H:%M UTC'
-                },
-                yaxis: { title: 'Smoothed Normalized Value' },
-                hovermode: 'closest'
-            };
+function plotGroupZooms(groups,processedData) {
+    const n_groups = 5; // Static value for the number of groups to zoom in on
 
-            originalLayout = JSON.parse(JSON.stringify(layout));
+    // Clear the previous zoomed plots
+    const zoomedPlotsDiv = document.getElementById('zoomed_plots');
+    zoomedPlotsDiv.innerHTML = ''; // Remove previous plots
 
-            Plotly.newPlot('plot', fullTraces, layout, { responsive: true })
-                .then(() => {
-                    attachClickHandler(); // Attach click handler after rendering
-                })
-                .catch(error => {
-                    console.error('Plot rendering error:', error);
-                });
+    // Loop over the top 5 groups and create subplots for each
+    for (let i = 0; i < n_groups; i++) {
+        // Check if there are fewer than 5 groups
+        if (i >= groups.length) {
+            break; // If fewer groups are available, stop the loop
         }
+
+        // Create a div for each subplot
+        const plotDiv = document.createElement('div');
+        plotDiv.classList.add('zoomed_plot'); // Apply square plot style
+        zoomedPlotsDiv.appendChild(plotDiv); // Append to the container
+
+        const group = groups[i];
+        const groupScore = group.score;
+        const groupIndex = i;
+        const avgTime = groupAverageTimes[groupIndex];
+        const correlation_window = parseInt(document.getElementById('correlation_window').value);
+
+        // Calculate zoom window based on average group time and correlation window
+        const zoomStartTime = new Date(new Date(avgTime).getTime() - 3 * correlation_window * 60 * 1000).toISOString();
+        const zoomEndTime = new Date(new Date(avgTime).getTime() + 3 * correlation_window * 60 * 1000).toISOString();
+
+        // Collect traces for the group
+        const traces = [];
+        for (const signalName in group) {
+            if (signalName === 'score') continue; // Skip the score key
+            const index = group[signalName];
+            const signal = processedData.signals[signalName];
+            const times = signal.times.map(t => new Date(t).toISOString());
+
+            // Add the signal trace for the group in the zoomed-in view
+            traces.push({
+                x: times,
+                y: signal.values,
+                mode: 'lines',
+                name: `${signalName} (Group ${i + 1})`,
+                hoverinfo: 'x+y+name',
+                visible: true,
+            });
+
+            // Add the peak marker for the group in the zoomed-in view
+            const peakTime = new Date(signal.times[index]).toISOString();
+            const peakValue = signal.values[index];
+            traces.push({
+                x: [peakTime],
+                y: [peakValue],
+                mode: 'markers',
+                marker: { symbol: 'diamond', size: 10, color: 'red' },
+                hoverinfo: 'x+y+name',
+                name: `${signalName} Peak`,
+                visible: true,
+            });
+        }
+
+        // Define layout for each subplot
+        const layout = {
+            title: `Group ${i + 1} (Score: ${groupScore.toFixed(2)})`,
+            xaxis: {
+                range: [zoomStartTime, zoomEndTime],
+                title: 'Time (UTC)',
+            },
+            yaxis: {
+                title: 'Smoothed Normalized Value',
+            },
+            showlegend: false,
+            margin: { t: 40, b: 40, l: 40, r: 40 }
+        };
+
+        // Render the zoomed-in plot in its div
+        Plotly.newPlot(plotDiv, traces, layout, { responsive: true })
+            .catch(function(error) {
+                console.error('Error rendering zoomed subplot:', error);
+            });
+    }
+}
+
+
 
         // Attach click handler to handle zooming into groups
         function attachClickHandler() {
