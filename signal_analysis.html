@@ -33,34 +33,50 @@ title: Astrofili Centesi - Sistema Helios - Analisi dei segnali
     </style>
 
     <div>
+        <div class="col-md-2">
         <label for="n_hours">Number of hours:</label>
         <input type="number" id="n_hours" value="24" step="1" min="1">
-
+        </div>
+        <div class="col-md-2">
         <label for="smooth_window">Smoothing window (minutes):</label>
         <input type="number" id="smooth_window" value="15" step="1" min="1">
+        </div>
 
+        <div class="col-md-2">
         <label for="prominence">Prominence:</label>
         <input type="number" id="prominence" value="1" step="0.1" min="0">
+        </div>
 
+        <div class="col-md-2">
         <label for="correlation_threshold">Correlation Threshold:</label>
         <input type="number" id="correlation_threshold" value="0.9" step="0.01" min="0" max="1">
+        </div>
 
+        <div class="col-md-2">
         <label for="correlation_window">Correlation Window (minutes):</label>
         <input type="number" id="correlation_window" value="15" step="1" min="1">
+        </div>
 
+        <div class="col-md-2">
         <label for="min_channels">Minimum Channels:</label>
         <input type="number" id="min_channels" value="3" step="1" min="1">
+        </div>
 
         <br><br>
 
+        <div class="col-md-2">
         <label for="enable_filter">High Pass Filter:</label>
         <input type="checkbox" id="enable_filter">
+        </div>
 
+        <div class="col-md-2">
         <label for="short_window">Short Moving Average (minutes):</label>
         <input type="number" id="short_window" value="5" step="1" min="1">
-
+        </div>
+        <div class="col-md-2">
         <label for="long_window">Long Moving Average (minutes):</label>
         <input type="number" id="long_window" value="30" step="1" min="1">
+        </div>
     </div>
 
     <div id="channelToggles" class="channel-toggles"></div> <!-- Channel toggles section -->
