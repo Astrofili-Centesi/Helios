@@ -25,6 +25,9 @@
             height: 30vh; /* Fixed height for square plot */
             margin: 5px;
         }
+        .channel-toggles {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -60,8 +63,9 @@
         <input type="number" id="long_window" value="30" step="1" min="1">
     </div>
 
+    <div id="channelToggles" class="channel-toggles"></div> <!-- Channel toggles section -->
     <div id="plot"></div>
-<div id="zoomed_plots"></div>
+    <div id="zoomed_plots"></div>
 
     <button id="backButton" onclick="returnToFullPlot()">Back to Full Plot</button>
 
@@ -75,18 +79,37 @@
         var currentGroupIndex = null;
         var groups = []; // Global variable to store groups
         var goesData = []; // Store GOES data globally
-
+        var enabledChannels = {}; // Keep track of enabled/disabled channels
+        const colorMap = {};
 
         // Ensure all operations happen after the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', function () {
             loadData();
         });
 
+        // Predefined colors to use (you can expand this array if needed)
+const colors = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+];
+
+
+// Function to assign a color from the colorMap, or generate a new one if the signal isn't already in the map
+function getColorForSignal(signalName) {
+    if (!colorMap[signalName]) {
+        const colorIndex = Object.keys(colorMap).length % colors.length;
+        colorMap[signalName] = colors[colorIndex]; // Assign a new color from the predefined array
+    }
+    return colorMap[signalName];
+}
+
+
         function loadData() {
             fetch('data/db_latest.json')
                 .then(response => response.json())
                 .then(jsonData => {
                     data = jsonData;
+                    initializeChannelToggles(Object.keys(data)); // Initialize channel toggles
                     initializePlot();
                 })
                 .catch(error => console.error('Error loading data:', error));
@@ -95,9 +118,7 @@
             const times = goesData.map(d => new Date(d.time_tag).getTime());
             const fluxes = goesData.map(d => 10 * Math.log10(d.flux));  // Convert GOES flux to dB
             const resampledValues = resampleData(times, fluxes, resampleTimes);
-            console.log(resampledValues);
             var meanValue = mean(resampledValues);
-            console.log(meanValue);
         var stdValue = standardDeviation(resampledValues, meanValue);
         var normalizedValues = resampledValues.map(function(v) {
             return ((v - meanValue) /stdValue) + (-60);
@@ -116,38 +137,52 @@
             }
         }
 
-async function initializePlot() {
-    try {
-        await fetchGOESData(); // Fetch GOES data once during initialization
+        function initializeChannelToggles(channelNames) {
+            const channelTogglesDiv = document.getElementById('channelToggles');
+            channelTogglesDiv.innerHTML = ''; // Clear previous toggles
 
-        updatePlot();
+            channelNames.forEach(channelName => {
+                // Create checkbox for each channel
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `toggle-${channelName}`;
+                        // Set default state: Off if starts with 'Noise' or is 'Total RMS', else On
+                if (channelName.startsWith('Noise') || channelName === 'Total RMS') {
+                    checkbox.checked = false;
+                    enabledChannels[channelName] = false; // Set channel as disabled by default
+                } else {
+                    checkbox.checked = true;
+                    enabledChannels[channelName] = true; // Set channel as enabled by default
+                }
 
-        // Attach event listeners for inputs
-        const inputs = [
-            'n_hours',
-            'smooth_window',
-            'prominence',
-            'correlation_threshold',
-            'correlation_window',
-            'min_channels',
-            'enable_filter',
-            'short_window',
-            'long_window'
-        ];
+                checkbox.addEventListener('change', () => {
+                    enabledChannels[channelName] = checkbox.checked;
+                    updatePlot(); // Update plot when toggled
+                });
 
-        inputs.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('input', updatePlot);
-                element.addEventListener('change', updatePlot);
-            } else {
-                console.error(`Element with id '${id}' not found`);
-            }
-        });
-    } catch (error) {
-        console.error('Error in initializePlot:', error);
-    }
-}
+                // Create label for each checkbox
+                const label = document.createElement('label');
+                label.htmlFor = `toggle-${channelName}`;
+                label.appendChild(document.createTextNode(channelName));
+
+                // Append checkbox and label to the div
+                const div = document.createElement('span');
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                channelTogglesDiv.appendChild(div);
+            });
+        }
+
+        async function initializePlot() {
+            await fetchGOESData(); // Fetch GOES data once during initialization
+            updatePlot(); // Initialize plot
+
+            // Attach event listeners for inputs
+            const inputElements = document.querySelectorAll('input');
+            inputElements.forEach(input => {
+                input.addEventListener('input', updatePlot);
+            });
+        }
 
 
         function updatePlot() {
@@ -207,6 +242,9 @@ async function initializePlot() {
             if (values[i] > maxY) maxY = values[i];
         }
 
+                // Get consistent color for this signal
+                const signalColor = getColorForSignal(signalName);
+
         fullTraces.push({
             x: times,
             y: values,
@@ -214,10 +252,24 @@ async function initializePlot() {
             name: signalName,
             hoverinfo: 'name+x+y',
             showlegend: true,
+            line: { color: signalColor }, // Use consistent color for the signal line
             meta: {
                 signalName: signalName,
                 traceType: 'signalLine'
             }
+        });
+
+                            // Add all detected peaks to the plot as markers (whether grouped or not)
+                            signal.peaks.forEach(peak => {
+            fullTraces.push({
+                x: [new Date(signal.times[peak.index]).toISOString()],
+                y: [peak.value],
+                mode: 'markers',
+                name: signalName + ' Peak',
+                marker: { symbol: 'circle', size: 4, color: 'black' },
+                hoverinfo: 'name+x+y',
+                showlegend: false
+            });
         });
     }
 
@@ -237,6 +289,7 @@ async function initializePlot() {
                     traceType: 'signalLine'
                 }
             });
+    
 
     // Plot group peaks and average times
     var colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'black', 'grey'];
@@ -249,6 +302,7 @@ async function initializePlot() {
         var groupScore = group.score; // Retrieve the group score
 
         for (var signalName in group) {
+            if (!enabledChannels[signalName]) continue; // Skip the signal if it is disabled
             if (signalName === 'score') continue; // Skip the score key
             var index = group[signalName];
             var signal = signals[signalName];
@@ -780,6 +834,7 @@ function processData(data, n_hours, smooth_window, prominence, correlation_thres
     var processedSignals = {};
 
     for (var signalName in data) {
+        if (!enabledChannels[signalName]) continue; // Skip disabled channels
         var signalData = data[signalName];
         var times = [];
         var values = [];
