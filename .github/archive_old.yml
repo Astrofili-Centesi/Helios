@@ -1,0 +1,37 @@
+# .github/workflows/archive_old.yml
+
+name: archive_old.csv
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  process_db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install pandas
+      - name: Run processing script
+        run: python scripts/archive_old.py --max_time '60 days'
+      - name: Commit changes
+        run: |
+          git config user.name 'GitHub Actions Bot'
+          git config user.email 'actions@github.com'
+          git add db.csv archive/
+          git commit -m 'Processed db.csv and archived old data' || echo "No changes to commit"
+          git push origin HEAD:${{ github.ref }}
+      - name: Upload Log File
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: process_db_log
+          path: process_db.log
