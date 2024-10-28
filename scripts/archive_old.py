@@ -14,7 +14,7 @@ def setup_logging():
 
     # Create handlers
     c_handler = logging.StreamHandler(sys.stdout)
-    f_handler = logging.FileHandler('process_db.log')
+    f_handler = logging.FileHandler('/tmp/process_db.log')
     c_handler.setLevel(logging.INFO)
     f_handler.setLevel(logging.DEBUG)
 
