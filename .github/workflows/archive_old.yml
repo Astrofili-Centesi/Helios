@@ -31,7 +31,7 @@ jobs:
           git push origin HEAD:${{ github.ref }}
       - name: Upload Log File
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: process_db_log
           path: process_db.log
