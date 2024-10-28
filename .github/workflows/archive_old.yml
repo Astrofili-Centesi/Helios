@@ -76,9 +76,3 @@ jobs:
           # Optional. Create given branch name in local and remote repository.
           # (Not released yet, available when @master is used)
           #create_branch: true
-      - name: Upload Log File
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: process_db_log
-          path: process_db.log
