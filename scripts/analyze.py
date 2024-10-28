@@ -4,64 +4,85 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-src=sys.argv[1]
-f_d24=sys.argv[2]
-f_dday=sys.argv[3]
-f_dmean5=sys.argv[4]
-f_dlast5=sys.argv[5]
-f_dlastmonth=sys.argv[6]
+def safe_to_json(df, path_or_buf, **kwargs):
+    """
+    Write DataFrame to JSON after dropping duplicated index rows to ensure the index is unique.
+    """
+    if not df.index.is_unique:
+        df = df[~df.index.duplicated(keep='first')]
+    df.to_json(path_or_buf, **kwargs)
 
-d = pd.read_csv(src)
+def main():
+    # Check command-line arguments
+    if len(sys.argv) < 7:
+        logging.error("Usage: script.py <src> <f_d24> <f_dday> <f_dmean5> <f_dlast5> <f_dlastmonth>")
+        sys.exit(1)
 
-freq = pd.read_csv('freq.csv')
-freq.index=freq['Canale']
+    # File paths from command-line arguments
+    src = sys.argv[1]
+    f_d24 = sys.argv[2]
+    f_dday = sys.argv[3]
+    f_dmean5 = sys.argv[4]
+    f_dlast5 = sys.argv[5]
+    f_dlastmonth = sys.argv[6]
 
-d['data'] = pd.to_datetime(d.data)
-d.index=d['data']
-d.drop(columns=['data'],inplace=True)
+    # Read input data and frequency mapping
+    df = pd.read_csv(src)
+    freq = pd.read_csv('freq.csv')
+    freq.index = freq['Canale']
 
-d.rename(columns=dict(zip(freq['Canale'], freq['Sigla'])),inplace=True)
+    # Convert 'data' column to datetime and set it as the index, dropping the original column
+    df['data'] = pd.to_datetime(df['data'])
+    df.set_index('data', inplace=True)
 
-d24=d.last('24h')
+    # Rename columns based on the mapping from freq.csv
+    rename_mapping = dict(zip(freq['Canale'], freq['Sigla']))
+    df.rename(columns=rename_mapping, inplace=True)
 
-d24.to_json(f_d24)
+    # --- Save the last 24 hours of data ---
+    last_time = df.index[-1]
+    df_last24 = df.loc[df.index >= (last_time - pd.Timedelta(hours=24))]
+    safe_to_json(df_last24, f_d24)
 
-# Salva un file con l'ultimo giorno intero
-lastTime=d.index[-1]
-lastDay=lastTime-pd.Timedelta('1D')
-logging.info("lastTime {} lastDay {}".format(lastTime,lastDay))
-yesterdayFrom=lastDay.floor('1D')
-yesterdayTo=lastDay.ceil('1D')
-logging.info("yesterdayFrom {} yesterdayTo {}".format(yesterdayFrom,yesterdayTo))
+    # --- Process yesterday’s full day ---
+    last_day = last_time - pd.Timedelta(days=1)
+    logging.info(f"lastTime {last_time} lastDay {last_day}")
 
-dYesterday=d[(d.index>=yesterdayFrom) & (d.index < yesterdayTo)]
+    yesterday_from = last_day.floor('D')
+    yesterday_to = last_day.ceil('D')
+    logging.info(f"yesterdayFrom {yesterday_from} yesterdayTo {yesterday_to}")
 
-dYesterday=dYesterday.resample('60s').mean()
-dYesterday.fillna(method='ffill').to_json(f_dday)
+    df_yesterday = df[(df.index >= yesterday_from) & (df.index < yesterday_to)]
+    df_yesterday = df_yesterday.resample('60s').mean().ffill()
+    safe_to_json(df_yesterday, f_dday)
 
-# Salva un file con l'ultimo mese
-lastMonthFrom = lastTime - pd.DateOffset(months=2)
-dlastMonth=d[d.index>=lastMonthFrom]
+    # --- Save data for the last month ---
+    last_month_from = last_time - pd.DateOffset(months=2)
+    df_last_month = df[df.index >= last_month_from]
+    logging.info(f"last month from {df_last_month.index[0]} to {df_last_month.index[-1]}")
+    safe_to_json(df_last_month, f_dlastmonth)
 
-logging.info("last month from {} to {}".format(dlastMonth.index[0],dlastMonth.index[-1]))
+    # --- Process the last 5 days for averaging ---
+    df_resampled = df.resample('60s').mean()
+    meanday_from = (last_day - pd.Timedelta(days=5)).floor('D')
+    meanday_to = last_day.floor('D')
+    logging.info(f"meandayFrom {meanday_from} meandayTo {meanday_to}")
 
-dlastMonth.to_json(f_dlastmonth)
+    df_last5 = df_resampled[(df_resampled.index >= meanday_from) & (df_resampled.index < meanday_to)].ffill()
 
-# Salva un file con la media degli ultimi 5 giorni
-# Sync with 5 minutes interval
-d=d.resample('60s').mean()
-meandayFrom=(lastDay-pd.Timedelta('5D')).floor('1D')
-meandayTo=(lastDay).floor('1D')
-logging.info("meandayFrom {} meandayTo {}".format(meandayFrom,meandayTo))
+    # Compute the mean grouped by hour and minute
+    df_mean = df_last5.groupby([df_last5.index.hour, df_last5.index.minute]).mean()
+    df_mean.index.set_names(['hour', 'minute'], inplace=True)
+    df_mean = df_mean.reset_index()
 
-dmeanday=d[(d.index>=meandayFrom) & (d.index < meandayTo)].fillna(method='ffill')
+    # Create a new datetime index based on meanday_from plus the hour/minute offsets
+    time_offsets = pd.to_timedelta(df_mean['hour'], unit='h') + pd.to_timedelta(df_mean['minute'], unit='m')
+    df_mean.index = meanday_from + time_offsets
+    df_mean.drop(columns=['hour', 'minute'], inplace=True)
+    safe_to_json(df_mean, f_dmean5)
 
-dmean=dmeanday.groupby([dmeanday.index.hour,dmeanday.index.minute]).mean()
+    # Save the last 5 days of data
+    safe_to_json(df_last5, f_dlast5)
 
-dmean.index.set_names(['hour','minute'],inplace=True)
-dmean.reset_index(inplace=True)
-dmean.index=meandayFrom+pd.Series(map(lambda x:pd.Timedelta(hours=x),dmean['hour']))+pd.Series(map(lambda x:pd.Timedelta(minutes=x),dmean['minute']))
-dmean.drop(columns=['hour','minute'],inplace=True)
-
-dmean.to_json(f_dmean5)
-dmeanday.to_json(f_dlast5)
+if __name__ == "__main__":
+    main()
