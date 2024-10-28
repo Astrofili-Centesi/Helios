@@ -1,4 +1,4 @@
-# archive_old.py
+# process_db.py
 
 import pandas as pd
 import os
@@ -73,29 +73,41 @@ def main():
         logger.debug(f'Found {len(old_data)} old records to archive')
         logger.debug(f'{len(new_data)} records will remain in db.csv')
 
+        # Ensure new_data is sorted by date
+        new_data = new_data.sort_values(by='data')
+        logger.info('Sorted new_data by date')
+
+        # Write new_data back to db.csv
+        new_data.to_csv('db.csv', index=False)
+        logger.info('Updated db.csv with recent data')
+
         # Group old_data by date
         if not old_data.empty:
             old_data['date_only'] = old_data['data'].dt.date
+
             for date, group in old_data.groupby('date_only'):
                 year = date.year
                 month = '{:02d}'.format(date.month)
                 dir_path = os.path.join('archive', str(year), month)
                 os.makedirs(dir_path, exist_ok=True)
                 file_path = os.path.join(dir_path, f'{date}.csv')
+
+                # Sort the group by 'data' column
+                group_sorted = group.sort_values(by='data')
+
                 if os.path.exists(file_path):
-                    # Append to existing file
-                    group.drop(columns=['date_only']).to_csv(file_path, mode='a', index=False, header=False)
-                    logger.info(f'Appended data to {file_path}')
+                    # Read existing data to ensure combined data is sorted
+                    existing_data = pd.read_csv(file_path, parse_dates=['data'])
+                    combined_data = pd.concat([existing_data, group_sorted.drop(columns=['date_only'])])
+                    combined_data = combined_data.sort_values(by='data')
+                    combined_data.to_csv(file_path, index=False)
+                    logger.info(f'Appended and sorted data in {file_path}')
                 else:
-                    # Write new file
-                    group.drop(columns=['date_only']).to_csv(file_path, index=False)
-                    logger.info(f'Created new archive file {file_path}')
+                    # Write new file with sorted data
+                    group_sorted.drop(columns=['date_only']).to_csv(file_path, index=False)
+                    logger.info(f'Created new archive file {file_path} with sorted data')
         else:
             logger.info('No old data to archive')
-
-        # Write new_data back to db.csv
-        new_data.to_csv('db.csv', index=False)
-        logger.info('Updated db.csv with recent data')
 
     except Exception as e:
         logger.exception('An error occurred during processing')
