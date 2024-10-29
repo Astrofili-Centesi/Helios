@@ -79,8 +79,9 @@ def main():
         logger.info(f'Latest date in db.csv: {latest_date}')
 
         # Calculate cutoff date
-        cutoff_date = latest_date - max_time_delta
-        logger.info(f'Cutoff date calculated: {cutoff_date}')
+        date_minus_max_time = latest_date - max_time_delta
+        cutoff_date = date_minus_max_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        logger.info(f'Cutoff date calculated (midnight of the day): {cutoff_date}')
 
         # Separate data before cutoff_date
         old_data = df[df['data'] < cutoff_date]
