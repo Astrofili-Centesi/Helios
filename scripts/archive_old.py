@@ -55,9 +55,24 @@ def main():
         df = pd.read_csv('db.csv', parse_dates=['data'])
         logger.debug(f'Read {len(df)} rows from db.csv')
 
+        # Read freq.csv to create a mapping from channel names to frequencies
+        logger.info('Reading freq.csv to get frequency mappings')
+        freq_df = pd.read_csv('freq.csv')
+        freq_mapping = dict(zip(freq_df['Canale'], freq_df['Freq'].astype(str)))
+        logger.debug(f'Frequency mapping: {freq_mapping}')
+
         if df.empty:
             logger.warning('db.csv is empty. Exiting the script.')
             return
+        
+        # Rename columns in df using the frequency mapping
+        logger.info('Renaming columns in db.csv using frequency mappings')
+        df.rename(columns=freq_mapping, inplace=True)
+        logger.debug(f'Columns after renaming: {df.columns.tolist()}')
+
+        # Remove duplicates in df based on 'data' column
+        df = df.drop_duplicates(subset='data')
+        logger.info(f'Dropped duplicates, {len(df)} unique records remain')
 
         # Get latest date
         latest_date = df['data'].max()
