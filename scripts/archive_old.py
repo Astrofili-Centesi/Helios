@@ -99,6 +99,7 @@ def main():
                     # Read existing data to ensure combined data is sorted
                     existing_data = pd.read_csv(file_path, parse_dates=['data'])
                     combined_data = pd.concat([existing_data, group_sorted.drop(columns=['date_only'])])
+                    combined_data = combined_data.drop_duplicates(subset='data')
                     combined_data = combined_data.sort_values(by='data')
                     combined_data.to_csv(file_path, index=False)
                     logger.info(f'Appended and sorted data in {file_path}')
