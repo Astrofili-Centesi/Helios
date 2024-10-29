@@ -50,32 +50,31 @@ def main():
         max_time_delta = timedelta(days=max_time_days)
         logger.debug(f'Parsed max_time: {max_time_days} days')
 
-        # Read db.csv
-        logger.info('Reading db.csv')
-        df = pd.read_csv('db.csv', parse_dates=['data'])
-        logger.debug(f'Read {len(df)} rows from db.csv')
-
         # Read freq.csv to create a mapping from channel names to frequencies
         logger.info('Reading freq.csv to get frequency mappings')
         freq_df = pd.read_csv('freq.csv')
         freq_mapping = dict(zip(freq_df['Canale'], freq_df['Freq'].astype(str)))
         logger.debug(f'Frequency mapping: {freq_mapping}')
 
+        # Read db.csv without parsing dates to preserve date format
+        logger.info('Reading db.csv')
+        df = pd.read_csv('db.csv', dtype=str)
+        logger.debug(f'Read {len(df)} rows from db.csv')
+
         if df.empty:
             logger.warning('db.csv is empty. Exiting the script.')
             return
-        
-        # Rename columns in df using the frequency mapping
-        logger.info('Renaming columns in db.csv using frequency mappings')
-        df.rename(columns=freq_mapping, inplace=True)
-        logger.debug(f'Columns after renaming: {df.columns.tolist()}')
 
-        # Remove duplicates in df based on 'data' column
+        # Parse 'data' column into datetime for processing, but keep original strings
+        df['data_parsed'] = pd.to_datetime(df['data'], utc=True)
+        logger.info('Parsed dates for processing')
+
+        # Remove duplicates based on 'data' column
         df = df.drop_duplicates(subset='data')
         logger.info(f'Dropped duplicates, {len(df)} unique records remain')
 
         # Get latest date
-        latest_date = df['data'].max()
+        latest_date = df['data_parsed'].max()
         logger.info(f'Latest date in db.csv: {latest_date}')
 
         # Calculate cutoff date
@@ -84,22 +83,30 @@ def main():
         logger.info(f'Cutoff date calculated (midnight of the day): {cutoff_date}')
 
         # Separate data before cutoff_date
-        old_data = df[df['data'] < cutoff_date]
-        new_data = df[df['data'] >= cutoff_date]
+        old_data = df[df['data_parsed'] < cutoff_date]
+        new_data = df[df['data_parsed'] >= cutoff_date]
         logger.debug(f'Found {len(old_data)} old records to archive')
         logger.debug(f'{len(new_data)} records will remain in db.csv')
 
-        # Ensure new_data is sorted by date
-        new_data = new_data.sort_values(by='data')
+        # Ensure new_data is sorted by 'data_parsed'
+        new_data = new_data.sort_values(by='data_parsed')
         logger.info('Sorted new_data by date')
 
-        # Write new_data back to db.csv
+        # Drop 'data_parsed' before writing back to db.csv
+        new_data = new_data.drop(columns=['data_parsed'])
+
+        # Write new_data back to db.csv with original headers and date format
         new_data.to_csv('db.csv', index=False)
         logger.info('Updated db.csv with recent data')
 
-        # Group old_data by date
+        # Process old_data for archiving
         if not old_data.empty:
-            old_data['date_only'] = old_data['data'].dt.date
+            # Rename columns in old_data using frequency mapping
+            old_data.rename(columns=freq_mapping, inplace=True)
+            logger.info('Renamed columns in old_data using frequency mappings')
+            logger.debug(f'Columns after renaming: {old_data.columns.tolist()}')
+
+            old_data['date_only'] = pd.to_datetime(old_data['data_parsed']).dt.date
 
             for date, group in old_data.groupby('date_only'):
                 year = date.year
@@ -108,21 +115,35 @@ def main():
                 os.makedirs(dir_path, exist_ok=True)
                 file_path = os.path.join(dir_path, f'{date}.csv')
 
-                # Sort the group by 'data' column
-                group_sorted = group.sort_values(by='data')
+                # Sort the group by 'data_parsed' column
+                group_sorted = group.sort_values(by='data_parsed').drop(columns=['date_only'])
+
+                # Drop 'data_parsed' before writing
+                group_sorted = group_sorted.drop(columns=['data_parsed'])
 
                 if os.path.exists(file_path):
-                    # Read existing data to ensure combined data is sorted
-                    existing_data = pd.read_csv(file_path, parse_dates=['data'])
-                    combined_data = pd.concat([existing_data, group_sorted.drop(columns=['date_only'])])
+                    # Read existing data
+                    existing_data = pd.read_csv(file_path, dtype=str)
+
+                    # Combine with current group
+                    combined_data = pd.concat([existing_data, group_sorted])
+
+                    # Remove duplicates based on 'data' column
                     combined_data = combined_data.drop_duplicates(subset='data')
-                    combined_data = combined_data.sort_values(by='data')
+                    logger.debug(f'After dropping duplicates, {len(combined_data)} records in {file_path}')
+
+                    # Sort combined data by 'data' column (dates as strings)
+                    combined_data['data_parsed'] = pd.to_datetime(combined_data['data'], utc=True)
+                    combined_data = combined_data.sort_values(by='data_parsed')
+                    combined_data = combined_data.drop(columns=['data_parsed'])
+
+                    # Write back to archive file
                     combined_data.to_csv(file_path, index=False)
-                    logger.info(f'Appended and sorted data in {file_path}')
+                    logger.info(f'Updated archive file {file_path}')
                 else:
-                    # Write new file with sorted data
-                    group_sorted.drop(columns=['date_only']).to_csv(file_path, index=False)
-                    logger.info(f'Created new archive file {file_path} with sorted data')
+                    # Write new archive file
+                    group_sorted.to_csv(file_path, index=False)
+                    logger.info(f'Created new archive file {file_path}')
         else:
             logger.info('No old data to archive')
 
