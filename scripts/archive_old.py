@@ -118,23 +118,24 @@ def main():
                 # Sort the group by 'data_parsed' column
                 group_sorted = group.sort_values(by='data_parsed').drop(columns=['date_only'])
 
-                # Drop 'data_parsed' before writing
-                group_sorted = group_sorted.drop(columns=['data_parsed'])
-
                 if os.path.exists(file_path):
                     # Read existing data
                     existing_data = pd.read_csv(file_path, dtype=str)
+
+                    existing_data['data_parsed'] = pd.to_datetime(existing_data['data'], utc=True)
+
+                    # Sort existing data by 'data_parsed' column
 
                     # Combine with current group
                     combined_data = pd.concat([existing_data, group_sorted])
 
                     # Remove duplicates based on 'data' column
-                    combined_data = combined_data.drop_duplicates(subset='data')
+                    combined_data = combined_data.drop_duplicates(subset='data_parsed')
                     logger.debug(f'After dropping duplicates, {len(combined_data)} records in {file_path}')
 
                     # Sort combined data by 'data' column (dates as strings)
-                    combined_data['data_parsed'] = pd.to_datetime(combined_data['data'], utc=True)
                     combined_data = combined_data.sort_values(by='data_parsed')
+                    combined_data['data']=combined_data['data_parsed']
                     combined_data = combined_data.drop(columns=['data_parsed'])
 
                     # Write back to archive file
