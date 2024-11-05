@@ -18,9 +18,6 @@ def extract_full_fft(filename, timestamp, fft_length, window_type=None):
         logging.error("Requested FFT length exceeds the file's data length.")
         sys.exit(1)
 
-    # Calculate the frequency width of each FFT band
-    frequency_width = sample_rate / fft_length
-
     # Create the window function if specified
     try:
         window = signal.get_window(window_type, fft_length) if window_type else np.ones(fft_length)
@@ -38,7 +35,10 @@ def extract_full_fft(filename, timestamp, fft_length, window_type=None):
     avg_fft_db = 20 * np.log10(avg_fft_magnitudes + 1e-10)  # Adding a small value to avoid log(0)
     avg_fft_db = [f"{x:.2f}" for x in avg_fft_db]
 
-    return timestamp, frequency_width, avg_fft_db
+    # Calculate frequency values for each bin
+    frequencies = [f"{i * sample_rate / fft_length:.2f}" for i in range(len(avg_fft_db))]
+
+    return timestamp, frequencies, avg_fft_db
 
 def main():
     parser = argparse.ArgumentParser(description="Extract an averaged FFT from a wav file using windowing.")
@@ -60,8 +60,8 @@ def main():
     if args.window:
         logging.info(f"Using window: {args.window}")
 
-    # Get averaged FFT data and frequency width over the full file
-    timestamp_str, frequency_width, avg_fft_db = extract_full_fft(args.filename, args.timestamp, args.fft_length, args.window)
+    # Get averaged FFT data and frequency labels for each bin
+    timestamp_str, frequencies, avg_fft_db = extract_full_fft(args.filename, args.timestamp, args.fft_length, args.window)
 
     # Check if file exists to determine write mode and header requirement
     file_exists = os.path.isfile(args.output)
@@ -72,10 +72,10 @@ def main():
         
         # Write header only if file doesn't exist
         if not file_exists:
-            writer.writerow(["timestamp", "frequency_width"] + [f"coeff_{i}" for i in range(len(avg_fft_db))])
+            writer.writerow(["timestamp"] + frequencies)
         
         # Write the new row of data
-        writer.writerow([timestamp_str, f"{frequency_width:.2f}"] + avg_fft_db)
+        writer.writerow([timestamp_str] + avg_fft_db)
     
     logging.info(f"FFT data saved to {args.output}")
 
