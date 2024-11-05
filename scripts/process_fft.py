@@ -5,10 +5,10 @@ import shutil
 import logging
 
 # Configuration
-NEW_CSV_PATH = "../fftnew.csv"       # Path to the new FFT data
-MAIN_CSV_PATH = "fft.csv"            # Path to the main FFT data
-ARCHIVE_DIR = "fft"                  # Base directory for archives
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"    # Adjust based on your timestamp format
+NEW_CSV_PATH = "../fftnew.csv"
+MAIN_CSV_PATH = "fft.csv"
+ARCHIVE_DIR = "fft"  # Base directory for archives
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # Adjust based on your timestamp format
 
 # Configure logging
 logging.basicConfig(
@@ -47,7 +47,7 @@ def process_fft():
 
         # Read new data from NEW_CSV_PATH
         new_df = pd.read_csv(NEW_CSV_PATH)
-
+        
         # Check if there is at least one data row (excluding header)
         if len(new_df) < 2:
             logging.info("No new data to append.")
@@ -60,7 +60,7 @@ def process_fft():
 
         # Read the main CSV with parsed timestamps
         try:
-            df = pd.read_csv(MAIN_CSV_PATH, parse_dates=[0])
+            df = pd.read_csv(MAIN_CSV_PATH, parse_dates=[0], date_parser=lambda x: pd.to_datetime(x, utc=True))
         except Exception as e:
             logging.error(f"Error reading {MAIN_CSV_PATH}: {e}")
             return
@@ -69,7 +69,7 @@ def process_fft():
         if df.columns[0].lower() != 'timestamp':
             df.rename(columns={df.columns[0]: 'timestamp'}, inplace=True)
 
-        # Ensure all timestamps are properly parsed and timezone-aware
+        # Ensure all timestamps are properly parsed and timezone-aware in UTC
         if not pd.api.types.is_datetime64_any_dtype(df['timestamp']):
             try:
                 df['timestamp'] = pd.to_datetime(df['timestamp'], format=TIME_FORMAT, utc=True)
@@ -78,36 +78,35 @@ def process_fft():
                 return
         else:
             # If already datetime64[ns, UTC], ensure they are in UTC
-            if df['timestamp'].dt.tz is None:
-                # If timestamps are naive, localize to UTC
-                df['timestamp'] = df['timestamp'].dt.tz_localize('UTC')
-                logging.info("Localized naive timestamps to UTC.")
-            else:
-                # Convert to UTC if they are timezone-aware but not in UTC
-                df['timestamp'] = df['timestamp'].dt.tz_convert('UTC')
+            df['timestamp'] = df['timestamp'].dt.tz_convert('UTC')
 
-        # Sort the dataframe by timestamp to ensure correct ordering
-        df = df.sort_values(by='timestamp').reset_index(drop=True)
+        # Remove duplicate timestamps, keeping the last occurrence (newest data)
+        before_dedup = len(df)
+        df.drop_duplicates(subset='timestamp', keep='last', inplace=True)
+        after_dedup = len(df)
+        duplicates_removed = before_dedup - after_dedup
+        if duplicates_removed > 0:
+            logging.info(f"Removed {duplicates_removed} duplicate timestamp(s).")
+        else:
+            logging.info("No duplicate timestamps found.")
 
         # Extract date from timestamp
         df['date'] = df['timestamp'].dt.date
 
-        # Determine the latest date in the file as the "current date"
+        # Determine the latest date in the file to use as 'today'
         latest_timestamp = df['timestamp'].max()
-        if pd.isna(latest_timestamp):
-            logging.error("No valid timestamps found in the data.")
-            return
+        today = latest_timestamp.date()
+        archive_before = today - timedelta(days=2)  # Dates <= archive_before will be archived
 
-        current_date = latest_timestamp.date()
-        archive_before = current_date - timedelta(days=2)  # Dates <= archive_before will be archived
-
-        logging.info(f"Latest timestamp in data: {latest_timestamp}")
-        logging.info(f"Current date based on data: {current_date}")
-        logging.info(f"Archiving dates on or before: {archive_before}")
+        logging.info(f"Determined 'today' as {today}")
+        logging.info(f"Dates to archive are on or before {archive_before}")
 
         # Identify unique dates to potentially archive
         unique_dates = df['date'].unique()
         dates_to_archive = [d for d in unique_dates if d <= archive_before]
+
+        logging.info(f"Unique dates in fft.csv: {unique_dates}")
+        logging.info(f"Dates to archive: {dates_to_archive}")
 
         # Archive each eligible date
         for date in dates_to_archive:
@@ -122,8 +121,6 @@ def process_fft():
                 # Remove archived data from the dataframe
                 df = df[df['timestamp'] >= day_end]
                 logging.info(f"Archived and removed data for {date}")
-            else:
-                logging.warning(f"No data found for {date} to archive.")
 
         # Sort the remaining data by timestamp
         df_sorted = df.sort_values(by='timestamp').reset_index(drop=True)
@@ -134,7 +131,7 @@ def process_fft():
         # Save the updated data back to MAIN_CSV_PATH
         try:
             df_sorted.to_csv(MAIN_CSV_PATH, index=False)
-            logging.info("Updated fft.csv by removing archived data and sorting by timestamp.")
+            logging.info("Updated fft.csv by removing archived data, removing duplicates, and sorting by timestamp.")
         except Exception as e:
             logging.error(f"Error writing to {MAIN_CSV_PATH}: {e}")
 
