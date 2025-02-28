@@ -7,11 +7,18 @@ from datetime import datetime, timedelta
 TIMESTAMP_KEY = 'timestamp'
 
 def parse_timestamp(ts_str):
-    # Assumes ISO format; adjust if necessary.
+    # Try to use fromisoformat (available in Python 3.7+)
     try:
         return datetime.fromisoformat(ts_str)
-    except ValueError:
-        raise ValueError(f"Unable to parse timestamp: {ts_str}")
+    except AttributeError:
+        # Fallback for older Python versions.
+        # This assumes the timestamp is in ISO format: "YYYY-MM-DDTHH:MM:SS" or with fractional seconds.
+        if ts_str.endswith("Z"):
+            ts_str = ts_str[:-1]  # remove 'Z' if present
+        try:
+            return datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S.%f")
+        except ValueError:
+            return datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -32,17 +39,15 @@ def main():
             try:
                 ts = parse_timestamp(row[TIMESTAMP_KEY])
             except Exception as e:
-                print(e)
+                print(f"Error parsing timestamp: {e}")
                 continue
-            # Convert all keys (except timestamp) to float.
             for key in row:
                 if key != TIMESTAMP_KEY:
                     try:
                         row[key] = float(row[key])
                     except ValueError:
                         row[key] = None
-            # Save the parsed datetime for filtering (will not be output).
-            row['_dt'] = ts
+            row['_dt'] = ts  # temporary field for filtering and sorting
             rows.append(row)
 
     if not rows:
@@ -56,17 +61,15 @@ def main():
 
     # Filter rows for the last 24 hours.
     filtered = [row for row in rows if row['_dt'] >= one_day_ago]
-    # Remove the temporary '_dt' field.
     for row in filtered:
         del row['_dt']
 
-    # Downsample if required.
+    # Downsample if requested.
     if args.step > 1:
         filtered = filtered[::args.step]
 
-    # Extract header (frequency keys) from the first row.
+    # Create a compact JSON structure with a single header and rows.
     header = [key for key in filtered[0] if key != TIMESTAMP_KEY]
-    # Create a compact rows structure: each row becomes a tuple of timestamp and a list of levels.
     compact_rows = []
     for row in filtered:
         compact_rows.append({
