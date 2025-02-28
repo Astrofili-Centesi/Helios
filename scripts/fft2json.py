@@ -7,17 +7,20 @@ from datetime import datetime, timedelta
 TIMESTAMP_KEY = 'timestamp'
 
 def parse_timestamp(ts_str):
-    # Try to use fromisoformat (available in Python 3.7+)
+    """
+    Parse a timestamp in the format "2025-02-27 00:00:01+00:00".
+    First try using datetime.fromisoformat (Python 3.7+). If not available
+    or it fails, remove the colon in the timezone and use strptime.
+    """
     try:
+        # This works in Python 3.7+; it accepts a space or 'T' between date and time.
         return datetime.fromisoformat(ts_str)
-    except AttributeError:
-        # Fallback for older Python versions.
-        if ts_str.endswith("Z"):
-            ts_str = ts_str[:-1]  # remove 'Z' if present
-        try:
-            return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f")
-        except ValueError:
-            return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
+    except (AttributeError, ValueError):
+        # Fallback for older Python versions or if fromisoformat fails.
+        # Remove the colon in the timezone part if present.
+        if ts_str[-3] == ':':
+            ts_str = ts_str[:-3] + ts_str[-2:]
+        return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S%z")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -40,13 +43,14 @@ def main():
             except Exception as e:
                 print(f"Error parsing timestamp: {e}")
                 continue
+            # Convert FFT values to float.
             for key in row:
                 if key != TIMESTAMP_KEY:
                     try:
                         row[key] = float(row[key])
                     except ValueError:
                         row[key] = None
-            row['_dt'] = ts  # temporary field for filtering and sorting
+            row['_dt'] = ts  # temporary field for sorting and filtering
             rows.append(row)
 
     if not rows:
@@ -67,7 +71,7 @@ def main():
     if args.step > 1:
         filtered = filtered[::args.step]
 
-    # Create a compact JSON structure with a single header and rows.
+    # Create a compact JSON structure: a one-time header and rows.
     header = [key for key in filtered[0] if key != TIMESTAMP_KEY]
     compact_rows = []
     for row in filtered:
