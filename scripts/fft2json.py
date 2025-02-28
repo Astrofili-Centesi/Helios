@@ -12,13 +12,12 @@ def parse_timestamp(ts_str):
         return datetime.fromisoformat(ts_str)
     except AttributeError:
         # Fallback for older Python versions.
-        # This assumes the timestamp is in ISO format: "YYYY-MM-DDTHH:MM:SS" or with fractional seconds.
         if ts_str.endswith("Z"):
             ts_str = ts_str[:-1]  # remove 'Z' if present
         try:
-            return datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S.%f")
+            return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f")
         except ValueError:
-            return datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S")
+            return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
 
 def main():
     parser = argparse.ArgumentParser(
