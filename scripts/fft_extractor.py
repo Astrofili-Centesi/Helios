@@ -13,6 +13,9 @@ def extract_full_fft(filename, timestamp, fft_length, window_type=None):
     if data.ndim > 1:
         data = data[:, 0]  # Take first channel if stereo
 
+    # normalize
+    data = data.astype(np.float32) / 32768.0
+
     # Ensure fft_length does not exceed data length
     if fft_length > len(data):
         logging.error("Requested FFT length exceeds the file's data length.")
