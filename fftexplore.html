@@ -372,7 +372,7 @@ csvFileInput.addEventListener("change", function(event) {
     // Default JSON loading if no CSV file is loaded.
     async function loadFFTData() {
       try {
-        const response = await fetch("data/fft.json.gz");
+        const response = await fetch("https://www.astrofilicentesi.it/Helios/data/fft.json.gz");
         const compressedBuffer = await response.arrayBuffer();
         const encoding = response.headers.get('Content-Encoding');
         let jsonString;
