@@ -45,6 +45,9 @@ jobs:
         run: |
             cp db.csv /tmp/
             python scripts/analyze.py /tmp/db.csv /tmp/db_latest.json /tmp/db_latest_day.json /tmp/db_mean_5days.json /tmp/db_latest_5days.json /tmp/db_latest_month.json
+            cp fft.csv /tmp/
+            python scripts/fft2json.py -i /tmp/fft.csv --step 2 -o /tmp/fft.json
+            gzip -9 -f /tmp/fft.json
       - uses: actions/checkout@v3
         with:
          ref: gh-pages
@@ -56,6 +59,7 @@ jobs:
             cp /tmp/db_mean_5days.json data
             cp /tmp/db_latest_5days.json data
             cp /tmp/db_latest_month.json data
+            cp /tmp/fft.json.gz data
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           # Optional. Commit message for the created commit.
