@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HELIOS 24h FFT Data Explorer</title>
+  <!-- Load Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Load Plotly.js explicit version -->
+  <script src="https://cdn.plot.ly/plotly-2.18.2.min.js"></script>
+  <!-- Load pako for gzip decompression -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+  <!-- Load fflate for Brotli decompression -->
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.0/umd/index.js"></script>
+  <!-- Load PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .plot-container { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <h1 class="mb-4">HELIOS 24h FFT Data Explorer</h1>
+
+    <!-- Controls -->
+    <div id="controls">
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="channelSelect" class="form-label">Channel Selection:</label>
+          <select id="channelSelect" class="form-select">
+            <option value="">Manual</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="centerSlider" class="form-label">
+            Central Frequency (Hz): <span id="centerValue"></span>
+          </label>
+          <input type="range" class="form-range" id="centerSlider" min="0" max="100" value="0" step="1">
+        </div>
+        <div class="col-md-4">
+          <label for="centerInput" class="form-label">&nbsp;</label>
+          <input type="number" class="form-control" id="centerInput" value="0">
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="bwSlider" class="form-label">
+            Bandwidth (Hz): <span id="bwValue"></span>
+          </label>
+          <input type="range" class="form-range" id="bwSlider" min="10" max="1000" value="100" step="1">
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="spectrogramToggle">
+            <label class="form-check-label" for="spectrogramToggle">
+              Show Spectrogram
+            </label>
+          </div>
+        </div>
+      </div>
+      <!-- CSV File Loader -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="csvFileInput" class="form-label">
+            Load CSV File (.csv or .csv.br)
+          </label>
+          <input type="file" id="csvFileInput" accept=".csv,.csv.br" class="form-control">
+        </div>
+      </div>
+    </div>
+
+    <!-- Average Level Time Series Plot -->
+    <div class="plot-container">
+      <h2>Average Level Time Series</h2>
+      <div id="plot"></div>
+    </div>
+
+    <!-- Spectrogram Plot (hidden by default) -->
+    <div id="spectrogramContainer" class="plot-container" style="display: none;">
+      <h2>Spectrogram</h2>
+      <div id="spectrogram"></div>
+    </div>
+  </div>
+
+  <script>
+    // Predefined channels.
+    const channels = [
+      {"canale": "ch1", "freq": 4500,  "sigla": "Noise_7k",         "città": "N.A."},
+      {"canale": "ch2", "freq": 11350, "sigla": "Noise_11k",        "città": "N.A."},
+      {"canale": "ch3", "freq": 27200, "sigla": "Noise_27k",        "città": "N.A."},
+      {"canale": "ch4", "freq": 58750, "sigla": "Noise_58k",        "città": "N.A."},
+      {"canale": "ch5", "freq": 89750, "sigla": "Noise_89k",        "città": "N.A."},
+      {"canale": "ch6", "freq": 19600, "sigla": "GBZ",              "città": "Skelto - GB"},
+      {"canale": "ch7", "freq": 20270, "sigla": "ICV",              "città": "Tavolar - IT"},
+      {"canale": "ch8", "freq": 20900, "sigla": "HWU",              "città": "Rosnay - FR"},
+      {"canale": "ch9", "freq": 22600, "sigla": "FTA(b)",           "città": "Rosnay - FR"},
+      {"canale": "ch10", "freq": 23400, "sigla": "DHO38",           "città": "Rhauderfehn Marinefunksendestelle - D"},
+      {"canale": "ch11", "freq": 24000, "sigla": "NAA",             "città": "Cutler - USA"},
+      {"canale": "ch12", "freq": 26700, "sigla": "TBB",             "città": "Denizköy Bafa - TUR"},
+      {"canale": "ch13", "freq": 29700, "sigla": "ISR",             "città": "Israele - ISR"},
+      {"canale": "ch14", "freq": 45900, "sigla": "NSY",             "città": "Niscemi – IT"},
+      {"canale": "ch15", "freq": 63850, "sigla": "FTA",             "città": "Rosnay - FR"},
+      {"canale": "ch16", "freq": 77500, "sigla": "DCF77",           "città": "Mainflingen - D"},
+      {"canale": "ch17", "freq": 65800, "sigla": "Total RMS",       "città": "NA"}
+    ];
+
+    let fftData = null;  // Global data (from JSON or CSV).
+    let headerFrequencies = []; // Numeric frequencies from the header.
+
+    // DOM elements.
+    const channelSelect = document.getElementById("channelSelect");
+    const centerSlider = document.getElementById("centerSlider");
+    const centerInput = document.getElementById("centerInput");
+    const bwSlider = document.getElementById("bwSlider");
+    const centerValueLabel = document.getElementById("centerValue");
+    const bwValueLabel = document.getElementById("bwValue");
+    const spectrogramToggle = document.getElementById("spectrogramToggle");
+    const spectrogramContainer = document.getElementById("spectrogramContainer");
+    const csvFileInput = document.getElementById("csvFileInput");
+
+    // Populate channel dropdown.
+    channels.forEach((ch, index) => {
+      const option = document.createElement("option");
+      option.value = index;
+      option.text = `${ch.canale}: ${ch.sigla} (${ch.freq} Hz)`;
+      channelSelect.appendChild(option);
+    });
+
+    // Improved energy calculation using linear (trapezoidal) interpolation.
+    function computeAverageLevel(row, freqMin, freqMax) {
+      let xs = [];
+      xs.push(freqMin);
+      headerFrequencies.forEach(f => {
+        if (f > freqMin && f < freqMax) xs.push(f);
+      });
+      xs.push(freqMax);
+      xs.sort((a, b) => a - b);
+
+      function getAmplitude(x_val) {
+        for (let i = 0; i < headerFrequencies.length; i++) {
+          if (Math.abs(x_val - headerFrequencies[i]) < 1e-6) {
+            return Math.pow(10, row.levels[i] / 20);
+          }
+        }
+        for (let i = 0; i < headerFrequencies.length - 1; i++) {
+          if (x_val > headerFrequencies[i] && x_val < headerFrequencies[i+1]) {
+            let t = (x_val - headerFrequencies[i]) / (headerFrequencies[i+1] - headerFrequencies[i]);
+            let a1 = Math.pow(10, row.levels[i] / 20);
+            let a2 = Math.pow(10, row.levels[i+1] / 20);
+            return a1 + t * (a2 - a1);
+          }
+        }
+        if (x_val <= headerFrequencies[0]) {
+          let t = (x_val - headerFrequencies[0]) / (headerFrequencies[1] - headerFrequencies[0]);
+          let a1 = Math.pow(10, row.levels[0] / 20);
+          let a2 = Math.pow(10, row.levels[1] / 20);
+          return a1 + t * (a2 - a1);
+        }
+        if (x_val >= headerFrequencies[headerFrequencies.length - 1]) {
+          let n = headerFrequencies.length;
+          let t = (x_val - headerFrequencies[n-2]) / (headerFrequencies[n-1] - headerFrequencies[n-2]);
+          let a1 = Math.pow(10, row.levels[n-2] / 20);
+          let a2 = Math.pow(10, row.levels[n-1] / 20);
+          return a1 + t * (a2 - a1);
+        }
+        return Math.pow(10, row.levels[0] / 20);
+      }
+
+      let integral = 0;
+      for (let i = 0; i < xs.length - 1; i++) {
+        let x0 = xs[i];
+        let x1 = xs[i+1];
+        let y0 = getAmplitude(x0);
+        let y1 = getAmplitude(x1);
+        integral += (y0 + y1) / 2 * (x1 - x0);
+      }
+      let avgAmp = integral / (freqMax - freqMin);
+      return 20 * Math.log10(avgAmp);
+    }
+
+    // Update the averaged level time series plot.
+    function updateLinePlot() {
+      if (!fftData) return;
+      const centerFreq = parseFloat(centerSlider.value);
+      const bw = parseFloat(bwSlider.value);
+      const freqMin = centerFreq - bw/2;
+      const freqMax = centerFreq + bw/2;
+      const levels = fftData.rows.map(row => computeAverageLevel(row, freqMin, freqMax));
+      const times = fftData.rows.map(row => new Date(row.timestamp));
+      const trace = {
+        x: times,
+        y: levels,
+        mode: 'lines',
+        type: 'scatter',
+        name: `Avg Level (Center: ${centerFreq} Hz, BW: ${bw} Hz)`
+      };
+      const layout = {
+        title: `Averaged FFT Level over 24h for ${centerFreq} Hz ± ${bw/2} Hz`,
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'Level (dB)' }
+      };
+      Plotly.newPlot('plot', [trace], layout);
+    }
+
+    // Update the spectrogram heatmap.
+    function updateSpectrogram() {
+      if (!fftData) return;
+      const centerFreq = parseFloat(centerSlider.value);
+      const bw = parseFloat(bwSlider.value);
+      const freqMinBoundary = centerFreq - bw/2;
+      const freqMaxBoundary = centerFreq + bw/2;
+      const times = fftData.rows.map(row => new Date(row.timestamp));
+      let Z = [];
+      for (let j = 0; j < headerFrequencies.length; j++) {
+        let rowZ = [];
+        for (let i = 0; i < fftData.rows.length; i++) {
+          rowZ.push(fftData.rows[i].levels[j]);
+        }
+        Z.push(rowZ);
+      }
+      const trace = {
+        type: 'heatmap',
+        x: times,
+        y: headerFrequencies,
+        z: Z,
+        colorscale: 'Viridis'
+      };
+      const shapes = [
+        {
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: 'y',
+          y0: centerFreq,
+          y1: centerFreq,
+          line: { color: 'red', width: 2 }
+        },
+        {
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: 'y',
+          y0: freqMinBoundary,
+          y1: freqMinBoundary,
+          line: { color: 'blue', width: 2, dash: 'dash' }
+        },
+        {
+          type: 'line',
+          xref: 'paper',
+          x0: 0,
+          x1: 1,
+          yref: 'y',
+          y0: freqMaxBoundary,
+          y1: freqMaxBoundary,
+          line: { color: 'blue', width: 2, dash: 'dash' }
+        }
+      ];
+      const layout = {
+        title: `Spectrogram with Center Frequency and Boundaries`,
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'Frequency (Hz)' },
+        shapes: shapes
+      };
+      Plotly.newPlot('spectrogram', [trace], layout);
+    }
+
+    // Combined update function.
+    function updatePlots() {
+      updateLinePlot();
+      if (spectrogramToggle.checked) {
+        spectrogramContainer.style.display = "block";
+        updateSpectrogram();
+      } else {
+        spectrogramContainer.style.display = "none";
+      }
+    }
+
+    // CSV Parsing function.
+    function parseCSV(csvText) {
+      Papa.parse(csvText, {
+        header: true,
+        dynamicTyping: true,
+        complete: function(results) {
+          if (results.errors.length) {
+            console.error("CSV parsing errors:", results.errors);
+            return;
+          }
+          const fields = results.meta.fields;
+          if (!fields || fields.length < 3) {
+            console.error("CSV file does not have the expected format.");
+            return;
+          }
+          const timestampField = fields[0];
+          const fftHeaders = fields.slice(1, fields.length - 1);
+          fftData = { header: fftHeaders, rows: [] };
+          results.data.forEach(row => {
+            let levels = [];
+            fftHeaders.forEach(h => {
+              levels.push(Number(row[h]));
+            });
+            fftData.rows.push({ timestamp: row[timestampField], levels: levels });
+          });
+          headerFrequencies = fftData.header.map(f => parseFloat(f));
+          if (headerFrequencies.length > 0) {
+            centerSlider.min = Math.floor(Math.min(...headerFrequencies));
+            centerSlider.max = Math.ceil(Math.max(...headerFrequencies));
+            let midFreq = Math.floor((Math.min(...headerFrequencies) + Math.max(...headerFrequencies)) / 2);
+            centerSlider.value = midFreq;
+            centerInput.value = midFreq;
+            centerValueLabel.textContent = midFreq;
+            bwSlider.min = 10;
+            bwSlider.max = 1000;
+            bwSlider.value = 100;
+            bwValueLabel.textContent = bwSlider.value;
+          }
+          updatePlots();
+        }
+      });
+    }
+
+// Event listener for CSV file loading.
+csvFileInput.addEventListener("change", function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const arrayBuffer = e.target.result;
+    if (file.name.endsWith(".br")) {
+      // Decompress Brotli-compressed file using fflate.
+      try {
+        const decompressed = fflate.decompressSync(new Uint8Array(arrayBuffer));
+        if (decompressed instanceof Uint8Array) {
+          const csvText = new TextDecoder("utf-8").decode(decompressed);
+          parseCSV(csvText);
+        } else {
+          console.error("Decompression did not return a Uint8Array.");
+        }
+      } catch (error) {
+        console.error("Error decompressing Brotli file:", error);
+      }
+    } else {
+      let csvText = new TextDecoder("utf-8").decode(arrayBuffer);
+      parseCSV(csvText);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+    // When a channel is selected, update slider and input values.
+    channelSelect.addEventListener("change", function() {
+      const idx = channelSelect.value;
+      if (idx !== "") {
+        const ch = channels[parseInt(idx)];
+        centerSlider.value = ch.freq;
+        centerInput.value = ch.freq;
+        bwSlider.value = 100;
+        centerValueLabel.textContent = ch.freq;
+        bwValueLabel.textContent = bwSlider.value;
+      }
+      updatePlots();
+    });
+
+    centerSlider.addEventListener("input", function() {
+      centerValueLabel.textContent = this.value;
+      centerInput.value = this.value;
+      channelSelect.value = "";
+      updatePlots();
+    });
+    centerInput.addEventListener("input", function() {
+      centerSlider.value = this.value;
+      centerValueLabel.textContent = this.value;
+      channelSelect.value = "";
+      updatePlots();
+    });
+    bwSlider.addEventListener("input", function() {
+      bwValueLabel.textContent = this.value;
+      channelSelect.value = "";
+      updatePlots();
+    });
+    spectrogramToggle.addEventListener("change", function() {
+      updatePlots();
+    });
+
+    // Default JSON loading if no CSV file is loaded.
+    async function loadFFTData() {
+      try {
+        const response = await fetch("fft.json.gz");
+        const compressedBuffer = await response.arrayBuffer();
+        const encoding = response.headers.get('Content-Encoding');
+        let jsonString;
+        if (encoding && encoding.includes("gzip")) {
+          jsonString = new TextDecoder("utf-8").decode(compressedBuffer);
+        } else {
+          jsonString = pako.ungzip(new Uint8Array(compressedBuffer), { to: 'string' });
+        }
+        fftData = JSON.parse(jsonString);
+        headerFrequencies = fftData.header.map(f => parseFloat(f));
+        centerSlider.min = Math.floor(Math.min(...headerFrequencies));
+        centerSlider.max = Math.ceil(Math.max(...headerFrequencies));
+        let midFreq = Math.floor((Math.min(...headerFrequencies) + Math.max(...headerFrequencies)) / 2);
+        centerSlider.value = midFreq;
+        centerInput.value = midFreq;
+        centerValueLabel.textContent = midFreq;
+        bwSlider.min = 10;
+        bwSlider.max = 1000;
+        bwSlider.value = 100;
+        bwValueLabel.textContent = bwSlider.value;
+        updatePlots();
+      } catch (error) {
+        console.error("Error loading or processing fft.json.gz:", error);
+      }
+    }
+
+    // Load the JSON data if no CSV file is loaded.
+    loadFFTData();
+  </script>
+</body>
+</html>
