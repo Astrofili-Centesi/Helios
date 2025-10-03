@@ -7,7 +7,7 @@ import logging
 # Configuration
 NEW_CSV_PATH = "../fftnew.csv"
 MAIN_CSV_PATH = "fft.csv"
-ARCHIVE_DIR = "fft"  # Base directory for archives
+ARCHIVE_DIR = "../fft"  # Base directory for archives
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # Adjust based on your timestamp format
 
 # Configure logging
