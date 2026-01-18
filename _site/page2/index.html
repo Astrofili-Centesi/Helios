@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Astrofili Centesi - Sistema Helios</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Esplora le ultime novità e registrazioni del sistema radiotelescopio Helios VLF, uno strumento innovativo per l'osservazione dei brillamenti solari e delle tempeste geomagnetiche." />
+    <meta name="keywords" content="Astrofili Centesi, Sistema Helios, brillamenti solari, tempeste geomagnetiche, radiotelescopio, radiotelescope" />
+    <meta name="author" content="Astrofili Centesi" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Astrofili Centesi - Sistema Helios" />
+    <meta property="og:description" content="Esplora le ultime novità e registrazioni del sistema radiotelescopio Helios VLF, uno strumento innovativo per l'osservazione dei brillamenti solari e delle tempeste geomagnetiche." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://astrofili-centesi.github.io/Helios/" />
+    <meta property="og:site_name" content="Astrofili Centesi - Helios VLF" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/Helios/assets/css/bootstrap-italia.min.css" />
+
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Matomo -->
+    <script>
+      var _paq = window._paq = window._paq || [];
+      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+      _paq.push(["disableCookies"]);
+      _paq.push(['trackPageView']);
+      _paq.push(['enableLinkTracking']);
+      (function() {
+        var u="//matomo.matteofortini.it/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '8']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+      })();
+    </script>
+    <noscript><p><img src="//matomo.matteofortini.it/matomo.php?idsite=8&amp;rec=1" style="border:0;" alt="" /></p></noscript>
+    <!-- End Matomo Code -->
+  </head>
+  <body>
+      <div class="it-header-center-wrapper it-small-header" data-bs-toggle="sticky">
+  <div class="container-xxl">
+    <div class="row">
+      <div class="col-12">
+        <div class="it-header-center-content-wrapper">
+          <div class="it-brand-wrapper">
+            <a href="/Helios">
+              <img class="icon" aria-hidden="true" src="/Helios/apple-icon.png">
+            </img>
+              <div class="it-brand-text">
+                <div class="it-brand-title">Astrofili Centesi</div>
+                <div class="it-brand-tagline d-none d-md-block">Sistema Helios - Osservatorio Astronomico di Cento</div>
+              </div>
+            </a>
+          </div>
+          <div class="it-right-zone">
+            <div class="it-socials d-none d-md-flex">
+              <span>Seguici su</span>
+              <ul>
+                <li>
+                  <a href="https://www.facebook.com/Associazione-Astrofili-Centesi-198990496786704" aria-label="Facebook" target="_blank">
+                    <svg class="icon">
+                      <use href="/Helios/assets/svg/sprites.svg#it-facebook"></use>
+                    </svg>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/Astrofili-Centesi" aria-label="Github" target="_blank">
+                    <svg class="icon">
+                      <use href="/Helios/assets/svg/sprites.svg#it-github"></use>
+                    </svg>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="it-header-navbar-wrapper">
+  <div class="container-xxl">
+    <div class="row">
+      <div class="col-12">
+        <!--start nav-->
+        <nav class="navbar navbar-expand-lg" aria-label="Navigazione principale">
+          <button class="custom-navbar-toggler" type="button" aria-controls="nav0" aria-expanded="false" aria-label="Mostra/Nascondi la navigazione" data-bs-toggle="navbarcollapsible" data-bs-target="#nav0">
+            <svg class="icon bg-override"><use href="/Helios/assets/svg/sprites.svg#it-burger"></use></svg>
+          </button>
+          <div class="navbar-collapsable" id="nav0" style="display: none;">
+            <div class="overlay" style="display: none;"></div>
+            <div class="close-div">
+              <button class="btn close-menu" type="button">
+                <span class="visually-hidden">Nascondi la navigazione</span>
+                <svg class="icon"><use href="/Helios/assets/svg/sprites.svg#it-close-big"></use></svg>
+              </button>
+            </div>
+            <div class="menu-wrapper">
+              <ul class="navbar-nav">
+
+                 <!--
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="/Helios/" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="mainNavDropdown0">
+                    <span>Helios</span>
+                    <svg class="icon icon-xs"><use href="/Helios/assets/svg/sprites.svg#it-expand"></use></svg>
+                  </a>
+                  <div class="dropdown-menu" role="region" aria-labelledby="mainNavDropdown0">
+                    <div class="link-list-wrapper">
+                      <ul class="link-list">
+                        <li><a class="dropdown-item list-item" href="/Helios/#news"><span>News</span></a></li>
+                        <li><span class="divider"></span></li>
+                        <li><a class="dropdown-item list-item" href="/Helios/#registrazione-24h"><span>Ultime 24h</span></a></li>
+                        <li><a class="dropdown-item list-item" href="/Helios/#magnetometro"><span>Magnetometro</span></a></li>
+                        <li><a class="dropdown-item list-item" href="/Helios/#registrazione-due-mesi"><span>Ultimi 2 mesi</span></a></li>
+                        <li><a class="dropdown-item list-item" href="/Helios/#spettrogramma"><span>Spettrogramma</span></a></li>
+
+                      </ul>
+                    </div>
+                  </div>
+                </li>
+              -->
+              <li class="nav-item"><a class="nav-link" href="/Helios/"><span>Helios</span></a></li>                
+              <li class="nav-item"><a class="nav-link" href="/Helios/fftexplore.html"><span>FFT Explorer</span></a></li>                
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <main>
+          <div class="container">
+              <div class="row">
+                  <div class="col-12">
+                      <!-- Page Content -->
+<h1>Astrofili Centesi - Sistema Helios</h1>
+
+<h2 id="news">News</h2>
+
+<div class="row">
+
+    <div class="col-md-3">
+        <div class="card wrapper">
+
+            <div class="card card-img no-after">
+                <a href="/Helios/2023/11/08/piccolo-brillamento.html">
+                <div class="img-responsive-wrapper">
+                    <div class="img-responsive">
+                        <figure class="img-wrapper">
+                            <img src="/Helios/assets/images/2023-11-08-piccolo-brillamento.png" alt="Helios ha captato un piccolo brillamento C1.2">
+                        </figure>
+                        <div class="card-calendar d-flex flex-column justify-content-center">
+                            <span class="card-date">8</span>
+                            <span class="card-day">
+Novembre
+  </span>
+                            <span class="card-year">2023</span>
+                        </div>
+                    </div>
+                </div>
+                </a>
+
+                <div class="card-body">
+                    <h3 class="card-title h5">Helios ha captato un piccolo brillamento C1.2</h3>
+                    <p class="card-text"><p>Incredibile quanto sia sensibile H...</p>
+                    <a class="read-more" href="/Helios/2023/11/08/piccolo-brillamento.html">
+                        <span class="text">Leggi di più</span>
+                        <span class="visually-hidden">su <p>Incredibile quanto sia sensibile Helios.
+Oggi ha captato un piccolo brillamento C1.2
+nel momento del tramonto</p>
+</span>
+                        <svg class="icon">
+                            <use href="/Helios/assets/svg/sprites.svg#it-arrow-right"></use>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card wrapper">
+
+            <div class="card card-img no-after">
+                <a href="/Helios/2023/10/25/XVIII-Congresso-nazionale-di-RadioAstronomia-Amatoriale.html">
+                <div class="img-responsive-wrapper">
+                    <div class="img-responsive">
+                        <figure class="img-wrapper">
+                            <img src="/Helios/assets/images/2023-10-25-XVIII-Congresso-nazionale-di-RadioAstronomia-Amatoriale.png" alt="Helios al XVIII Congresso nazionale di RadioAstronomia Amatoriale">
+                        </figure>
+                        <div class="card-calendar d-flex flex-column justify-content-center">
+                            <span class="card-date">25</span>
+                            <span class="card-day">
+Ottobre
+  </span>
+                            <span class="card-year">2023</span>
+                        </div>
+                    </div>
+                </div>
+                </a>
+
+                <div class="card-body">
+                    <h3 class="card-title h5">Helios al XVIII Congresso nazionale di RadioAstronomia Amatoriale</h3>
+                    <p class="card-text"><p>L’Associazione Tuscolana di Astron...</p>
+                    <a class="read-more" href="/Helios/2023/10/25/XVIII-Congresso-nazionale-di-RadioAstronomia-Amatoriale.html">
+                        <span class="text">Leggi di più</span>
+                        <span class="visually-hidden">su <p>L’Associazione Tuscolana di Astronomia, sabato 28 e domenica 29 ottobre 2023 
+avrà l’onore di ospitare all’interno del Parco Astronomico “Livio Gratton” 
+a Rocca di Papa, il XVIII congresso nazionale di RadioAstronomia Amatoriale, 
+in collaborazione con IARA – Italian Amateur Radio Astronomy 
+e con la Sezione di RadioAstronomia della Unione Astrofili Italiani.</p>
+
+</span>
+                        <svg class="icon">
+                            <use href="/Helios/assets/svg/sprites.svg#it-arrow-right"></use>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+<nav class="pagination-wrapper" aria-label="Navigazione delle news">
+  <ul class="pagination">
+  
+    <li class="page-item">
+    <a class="page-link" href="/Helios/">
+        <svg class="icon icon-primary"><use href="/Helios/assets/svg/sprites.svg#it-chevron-left"></use></svg>
+        <span class="visually-hidden">Pagina precedente</span>
+    </a>
+  
+  
+    
+    <li class="page-item"><a class="page-link" href="/Helios/">1</a></li>
+    
+  
+    
+    <li class="page-item"><a class="page-link" aria-current="page" href="#">2</a></li>
+    
+  
+
+  
+    <li class="page-item disabled">
+      <a class="page-link" href="">
+        <span class="visually-hidden">Pagina successiva</span>
+        <svg class="icon icon-primary"><use href="/Helios/assets/svg/sprites.svg#it-chevron-right"></use></svg>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+</div>
+
+<h2 id="registrazione-24h">Ultime 24h di registrazione</h2>
+<h3>HELIOS</h3>
+<div id="plotlyDiv"></div>
+
+<h3>GOES-16</h3>
+<a href="https://www.swpc.noaa.gov/products/goes-x-ray-flux">https://www.swpc.noaa.gov/products/goes-x-ray-flux</a>
+<div id="plotlyDivGOES"></div>
+
+<h2 id="magnetometro">Magnetometro (ultime 48h)</h2>
+<div id="magnetDiv"></div>
+
+<h2 id="registrazione-due-mesi">Ultimi due mesi di registrazione</h2>
+<p>(utilizzare i bottoni o lo slider per navigare)</p>
+<div id="plotlyDiv4"></div>
+
+<!-- IN MANUTENZIONE
+## Dati medi degli ultimi 5 giorni di registrazione
+
+<div id="plotlyDiv3"></div>
+-->
+
+<h2 id="spettrogramma">Spettrogramma del segnale</h2>
+<img src="https://www.astrofilicentesi.it/Appoggio/spectrogram.png" class="center img-fluid" alt="Spettrogramma del segnale"> 
+
+<h2>&nbsp;<br></h2>
+
+<h2 id="helios">Il sistema Helios VLF solar telescope</h2>
+<p>
+Helios VLF è uno strumento di tipo ROEON (Rivelatore Onde Elettromagnetiche di Origine Naturale) destinato a raccogliere informazioni sui brillamenti solari, sulle tempeste geomagnetiche, sulle scariche atmosferiche se su tanti altri eventi di origine naturale.
+</p>
+<p>
+Le sue lunghe "braccia" gli conferiscono un'alta sensibilità che consente di raccogliere dati accurati.
+</p>
+<p>
+Il sistema si compone di un dipolo a correnti di terra con ampia area di cattura, di un circuito di trattamento del segnale, di un acquisitore, di un sistema di elaborazione matematica del segnale e infine di un logger in grado di archiviare l'intera quantità di dati
+elaborati, che sono poi <a href="https://github.com/Astrofili-Centesi/Helios">resi disponibili su internet</a>.
+</p>
+<p>
+L'antenna, di 25m, è totalmente interrata, offre una buona sensibilità a fronte di un eccezionale rapporto segnale/rumore ed è completamente invisibile.
+</p>
+<p>
+L'intero sistema è stato progettato e costruito dagli <a href="https://www.astrofilicentesi.it/">Astrofili Centesi</a>.
+</p>
+<p>
+Il funzionamento di Helios è stato documentato in questo articolo <a href="https://doi.org/10.5281/zenodo.7097629"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.7097629.svg" alt="DOI"></a>.
+</p>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+<script>
+  
+
+const layout_base = {
+height: 800,
+xaxis: {
+title: 'timestamp'
+       },
+yaxis: {
+title: "dBFS",
+//range: [-100,-20]
+       }
+};
+
+const layout_magnet = {
+height: 800,
+xaxis: {
+title: 'timestamp'
+       },
+yaxis: {
+title: "uT",
+//range: [-100,-20]
+       }
+};
+
+function plotPlotly(divname,channels,layout) {
+    var plotlydata=channels;
+    Plotly.newPlot(divname,plotlydata, layout);
+}
+
+
+function plotJSON(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+        var labels=[];
+        var channels=[];
+
+        $.each(inputdata, function(channel_name, channel_data) {
+            var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+            var ch={
+                label: channel_name,
+                showLine: true,
+                data: []
+            };
+
+            $.each(channel_data, function( key, val ) {
+                labels.push(parseInt(key));
+                ch['data'].push({'x':parseInt(key),'y':val});
+                chdata['x'].push(new Date(parseInt(key)).toISOString());
+                chdata['y'].push(val);
+            });
+
+            channels.push(chdata);
+        });
+
+        plotPlotly(divname,channels,layout);
+    });
+}
+
+function plotGOES(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+        var labels=[];
+        var channels=[];
+        var chdata={type:'scatter', mode: 'lines', name:"GOES-16", x:[],y:[]};
+        var ch={
+            label: "GOES-16",
+            showLine: true,
+            data: []
+        };
+
+        $.each(inputdata, function(key,val) {
+            if (val["energy"]=="0.05-0.4nm") {
+                x=val["time_tag"];
+                y=val["flux"];
+                labels.push(x);
+            ch['data'].push({'x':x,'y':y});
+                chdata['x'].push(x);
+                chdata['y'].push(y);
+            }
+        }
+        );
+
+            channels.push(chdata);
+
+        plotPlotly(divname,channels,layout);
+    });
+}
+
+function plotJSONMagnet(filename,divname,layout) {
+    $.getJSON( filename, function( inputdata ) {
+        var labels=[];
+        var channels=[];
+
+        $.each(inputdata, function(channel_name, channel_data) {
+            if (channel_name=="magnet") {
+                var chdata={type:'scatter', mode: 'lines', name:channel_name, x:[],y:[]};
+                var ch={
+                    label: channel_name,
+                    showLine: true,
+                    data: []
+                };
+
+                $.each(channel_data, function( key, val ) {
+                    labels.push(key);
+                    ch['data'].push({'x':key,'y':val});
+                    chdata['x'].push(key);
+                    chdata['y'].push(val);
+                });
+
+                channels.push(chdata);
+            }
+        }
+        );
+        plotPlotly(divname,channels,layout);
+    });
+}
+
+plotJSON("https://raw.githubusercontent.com/Astrofili-Centesi/Helios/gh-pages/data/db_latest.json",'plotlyDiv',layout_base);
+
+plotJSONMagnet("https://raw.githubusercontent.com/Astrofili-Centesi/Magnet/main/data/48h.json",'magnetDiv',layout_magnet);
+
+var selectorOptions = {
+
+    buttons: [{
+
+        step: 'day',
+
+        stepmode: 'backward',
+
+        count: 1,
+
+        label: '1d'
+
+    }, {
+
+        step: 'day',
+
+        stepmode: 'backward',
+
+        count: 7,
+
+        label: '1w'
+
+    }, {
+
+        step: 'all',
+
+    }],
+
+};
+
+const layout_slider = {
+height: 800,
+        xaxis: {
+title: 'timestamp',
+       rangeselector: selectorOptions,
+
+       rangeslider: { range: 864000 }
+
+        },
+yaxis: {
+fixedrange: false,
+title: "dBFS",
+//range: [-100,-20]
+       }
+};
+
+const layout_GOES = {
+height: 400,
+        xaxis: {
+title: 'timestamp',
+
+       rangeslider: { range: 864000 }
+
+        },
+yaxis: {
+fixedrange: false,
+title: "",
+//range: [-100,-20]
+       }
+};
+
+plotJSON("https://raw.githubusercontent.com/Astrofili-Centesi/Helios/gh-pages/data/db_latest_month.json", 'plotlyDiv4', layout_slider);
+
+plotGOES("https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json", 'plotlyDivGOES', layout_GOES);
+
+function addZero(i) {
+  if (i < 10) {i = "0" + i}
+  return i;
+}
+
+function stripDate(timestamp)
+{
+    var d = new Date(parseInt(timestamp));
+    return addZero(d.getHours()) + ":" + addZero(d.getMinutes()) + ":" + addZero(d.getSeconds());
+}
+
+
+</script>
+
+                  </div>
+              </div>
+          </div>
+      </main>
+
+      <footer class="it-footer">
+  <div class="it-footer-small-prints clearfix">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 my-3">
+                <center>
+                <span class="d-inline-block"><a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licenza Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></span>
+                <span class="d-inline-block"><a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Quest'opera è distribuita con Licenza Creative Commons Attribuzione - Condividi allo stesso modo 4.0 Internazionale</a>.</span>
+            </div>
+        </div>
+    </div>
+  </div>
+</footer>
+
+
+    <!-- JS -->
+    <script>
+        window.__PUBLIC_PATH__ = '/Helios/assets/fonts'
+    </script>
+    <script src="/Helios/assets/js/bootstrap-italia.bundle.min.js"></script>
+  <!-- Load Plotly.js explicit version -->
+  <script src="https://cdn.plot.ly/plotly-2.18.2.min.js"></script>
+  <!-- Load pako for gzip decompression -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+  <!-- Load fflate for Brotli decompression -->
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.0/umd/index.js"></script>
+  <!-- Load PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  </body>
+</html>
+
