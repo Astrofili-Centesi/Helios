@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{page.title}}</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Esplora le ultime novità e registrazioni del sistema radiotelescopio Helios VLF, uno strumento innovativo per l'osservazione dei brillamenti solari e delle tempeste geomagnetiche." />
+    <meta name="keywords" content="Astrofili Centesi, Sistema Helios, brillamenti solari, tempeste geomagnetiche, radiotelescopio, radiotelescope" />
+    <meta name="author" content="Astrofili Centesi" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Astrofili Centesi - Sistema Helios" />
+    <meta property="og:description" content="Esplora le ultime novità e registrazioni del sistema radiotelescopio Helios VLF, uno strumento innovativo per l'osservazione dei brillamenti solari e delle tempeste geomagnetiche." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://astrofili-centesi.github.io/Helios/" />
+    <meta property="og:site_name" content="Astrofili Centesi - Helios VLF" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{site.baseurl}}/assets/css/bootstrap-italia.min.css" />
+
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Matomo -->
+    <script>
+      var _paq = window._paq = window._paq || [];
+      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+      _paq.push(["disableCookies"]);
+      _paq.push(['trackPageView']);
+      _paq.push(['enableLinkTracking']);
+      (function() {
+        var u="//matomo.matteofortini.it/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '8']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+      })();
+    </script>
+    <noscript><p><img src="//matomo.matteofortini.it/matomo.php?idsite=8&amp;rec=1" style="border:0;" alt="" /></p></noscript>
+    <!-- End Matomo Code -->
+  </head>
+  <body>
+      {% include header.html %}
+      <main>
+          <div class="container">
+              <div class="row">
+                  <div class="col-12">
+                      {{content}}
+                  </div>
+              </div>
+          </div>
+      </main>
+
+      {% include footer.html %}
+
+    <!-- JS -->
+    <script>
+        window.__PUBLIC_PATH__ = '{{site.baseurl}}/assets/fonts'
+    </script>
+    <script src="{{site.baseurl}}/assets/js/bootstrap-italia.bundle.min.js"></script>
+  <!-- Load Plotly.js explicit version -->
+  <script src="https://cdn.plot.ly/plotly-2.18.2.min.js"></script>
+  <!-- Load pako for gzip decompression -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+  <!-- Load fflate for Brotli decompression -->
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.0/umd/index.js"></script>
+  <!-- Load PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  </body>
+</html>
+
