@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signal Analysis</title>
+    <!-- Include Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #plot {
+            height: 50vh;
+        }
+        #backButton {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+    <style>
+        #zoomed_plots {
+            display: flex;
+            overflow-x: auto;
+            height: 30vh; /* Fixed height to ensure square aspect ratio */
+        }
+        .zoomed_plot {
+            flex: 0 0 auto; /* Prevent shrinking */
+            width: 30vh; /* Same width as height for square plot */
+            height: 30vh; /* Fixed height for square plot */
+            margin: 5px;
+        }
+        .channel-toggles {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Signal Analysis</h1>
+    <div>
+        <label for="n_hours">Number of hours:</label>
+        <input type="number" id="n_hours" value="24" step="1" min="1">
+
+        <label for="prominence">Prominence:</label>
+        <input type="number" id="prominence" value="1" step="0.1" min="0">
+
+        <label for="correlation_threshold">Correlation Threshold:</label>
+        <input type="number" id="correlation_threshold" value="0.8" step="0.01" min="0" max="1">
+
+        <label for="correlation_window">Correlation Window (minutes):</label>
+        <input type="number" id="correlation_window" value="15" step="1" min="1">
+
+        <label for="min_channels">Minimum Channels:</label>
+        <input type="number" id="min_channels" value="3" step="1" min="1">
+        <label for="window_noise">Noise Window (minutes):</label>
+        <input type="number" id="window_noise" value="6" step="1" min="1">
+        
+        <label for="apply_wiener">Apply Wiener Filter:</label>
+        <input type="checkbox" id="apply_wiener" checked>
+        
+    </div>
+
+    <div id="channelToggles" class="channel-toggles"></div> <!-- Channel toggles section -->
+    <div id="plot"></div>
+    <div id="zoomed_plots"></div>
+
+    <button id="backButton" onclick="returnToFullPlot()">Back to Full Plot</button>
+
+    <script>
+        var data;
+        var fullTraces = [];
+        var groupMappings = {};
+        var groupAverageTimes = {};
+        var layout = {};
+        var originalLayout;
+        var currentGroupIndex = null;
+        var groups = []; // Global variable to store groups
+        var goesData = []; // Store GOES data globally
+        var enabledChannels = {}; // Keep track of enabled/disabled channels
+        const colorMap = {};
+
+        // Ensure all operations happen after the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            loadData();
+        });
+
+        // Predefined colors to use (you can expand this array if needed)
+const colors = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+];
+
+
+// Function to assign a color from the colorMap, or generate a new one if the signal isn't already in the map
+function getColorForSignal(signalName) {
+    if (!colorMap[signalName]) {
+        const colorIndex = Object.keys(colorMap).length % colors.length;
+        colorMap[signalName] = colors[colorIndex]; // Assign a new color from the predefined array
+    }
+    return colorMap[signalName];
+}
+
+
+        function loadData() {
+            fetch('data/db_latest.json')
+                .then(response => response.json())
+                .then(jsonData => {
+                    data = jsonData;
+                    initializeChannelToggles(Object.keys(data)); // Initialize channel toggles
+                    initializePlot();
+                })
+                .catch(error => console.error('Error loading data:', error));
+        }
+        function resampleGOESData(resampleTimes) {
+            const times = goesData.map(d => new Date(d.time_tag).getTime());
+            const fluxes = goesData.map(d => 10 * Math.log10(d.flux));  // Convert GOES flux to dB
+            const resampledValues = resampleData(times, fluxes, resampleTimes);
+            var meanValue = mean(resampledValues);
+        var stdValue = standardDeviation(resampledValues, meanValue);
+        var normalizedValues = resampledValues.map(function(v) {
+            return ((v - meanValue) /stdValue) + (-60);
+        });
+        return normalizedValues;
+        }
+        async function fetchGOESData() {
+            const url = "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json";
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                goesData = data.filter(item => item.energy === "0.05-0.4nm");  // Filter for the correct energy range
+            } catch (error) {
+                console.error("Error fetching GOES X-ray data:", error);
+            }
+        }
+
+        function initializeChannelToggles(channelNames) {
+            const channelTogglesDiv = document.getElementById('channelToggles');
+            channelTogglesDiv.innerHTML = ''; // Clear previous toggles
+
+            channelNames.forEach(channelName => {
+                // Create checkbox for each channel
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `toggle-${channelName}`;
+                        // Set default state: Off if starts with 'Noise' or is 'Total RMS', else On
+                if (channelName.startsWith('Noise') || channelName === 'Total RMS') {
+                    checkbox.checked = false;
+                    enabledChannels[channelName] = false; // Set channel as disabled by default
+                } else {
+                    checkbox.checked = true;
+                    enabledChannels[channelName] = true; // Set channel as enabled by default
+                }
+
+                checkbox.addEventListener('change', () => {
+                    enabledChannels[channelName] = checkbox.checked;
+                    updatePlot(); // Update plot when toggled
+                });
+
+                // Create label for each checkbox
+                const label = document.createElement('label');
+                label.htmlFor = `toggle-${channelName}`;
+                label.appendChild(document.createTextNode(channelName));
+
+                // Append checkbox and label to the div
+                const div = document.createElement('span');
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                channelTogglesDiv.appendChild(div);
+            });
+        }
+
+        async function initializePlot() {
+            await fetchGOESData(); // Fetch GOES data once during initialization
+            updatePlot(); // Initialize plot
+
+            // Attach event listeners for inputs
+            const inputElements = document.querySelectorAll('input');
+            inputElements.forEach(input => {
+                input.addEventListener('input', updatePlot);
+            });
+        }
+
+
+        function updatePlot() {
+    try {
+        const n_hours = parseFloat(document.getElementById('n_hours').value);
+        const window_noise = parseFloat(document.getElementById('window_noise').value);
+        const prominence = parseFloat(document.getElementById('prominence').value);
+        const correlation_threshold = parseFloat(document.getElementById('correlation_threshold').value);
+        const correlation_window = parseFloat(document.getElementById('correlation_window').value);
+        const min_channels = parseInt(document.getElementById('min_channels').value);
+        const applyWiener = document.getElementById('apply_wiener').checked;
+
+        const processedData = processData(
+            data,
+            n_hours,
+            prominence,
+            correlation_threshold,
+            correlation_window,
+            min_channels,
+            window_noise,
+            applyWiener
+        );
+
+        plotData(processedData);
+    } catch (error) {
+        console.error('Error in updatePlot:', error);
+    }
+}
+
+
+        function plotData(processedData) {
+    var signals = processedData.signals;
+    groups = processedData.groups;  // Store processed groups globally
+
+    fullTraces = [];
+    groupMappings = {};
+    groupAverageTimes = {};
+
+    var minY = Infinity;
+    var maxY = -Infinity;
+
+    for (var signalName in signals) {
+        var signal = signals[signalName];
+        var times = signal.times.map(t => new Date(t).toISOString());
+        var values = signal.values;
+
+        for (var i = 0; i < values.length; i++) {
+            if (values[i] < minY) minY = values[i];
+            if (values[i] > maxY) maxY = values[i];
+        }
+
+                // Get consistent color for this signal
+                const signalColor = getColorForSignal(signalName);
+
+        fullTraces.push({
+            x: times,
+            y: values,
+            mode: 'lines',
+            name: signalName,
+            hoverinfo: 'name+x+y',
+            showlegend: true,
+            line: { color: signalColor }, // Use consistent color for the signal line
+            meta: {
+                signalName: signalName,
+                traceType: 'signalLine'
+            }
+        });
+
+                            // Add all detected peaks to the plot as markers (whether grouped or not)
+                            signal.peaks.forEach(peak => {
+            fullTraces.push({
+                x: [new Date(signal.times[peak.index]).toISOString()],
+                y: [peak.value],
+                mode: 'markers',
+                name: signalName + ' Peak',
+                marker: { symbol: 'circle', size: 4, color: 'black' },
+                hoverinfo: 'name+x+y',
+                showlegend: false
+            });
+        });
+    }
+
+
+            // Add GOES data to the plot
+            const resampledGOESFlux = resampleGOESData(processedData.signals[Object.keys(processedData.signals)[0]].times);
+            fullTraces.push({
+                x: processedData.signals[Object.keys(processedData.signals)[0]].times.map(t => new Date(t).toISOString()),
+                y: resampledGOESFlux,
+                mode: 'lines',
+                name: 'GOES Flux (0.05-0.4nm) [dB]',
+                hoverinfo: 'name+x+y',
+                line: { color: 'orange' },
+                showlegend: true,
+                meta: {
+                    signalName: 'GOESFlux',
+                    traceType: 'signalLine'
+                }
+            });
+    
+
+    // Plot group peaks and average times
+    var colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'black', 'grey'];
+    for (var i = 0; i < groups.length; i++) {
+        var group = groups[i];
+        var color = colors[i % colors.length];
+        groupMappings[i] = [];
+
+        var timesInGroup = [];
+        var groupScore = group.score; // Retrieve the group score
+
+        for (var signalName in group) {
+            if (!enabledChannels[signalName]) continue; // Skip the signal if it is disabled
+            if (signalName === 'score') continue; // Skip the score key
+            var index = group[signalName];
+            var signal = signals[signalName];
+            var time = new Date(signal.times[index]).toISOString();
+            var value = signal.values[index];
+
+            timesInGroup.push(signal.times[index]);
+
+            fullTraces.push({
+                x: [time],
+                y: [value],
+                mode: 'markers',
+                marker: {
+                    symbol: 'diamond',
+                    size: 10,
+                    color: color
+                },
+                name: 'Group ' + (i + 1),
+                legendgroup: 'Group ' + (i + 1),
+                showlegend: false,
+                hoverinfo: 'text+x+y',
+                text: 'Group ' + (i + 1) + ' (Score: ' + groupScore.toFixed(2) + ')',
+                customdata: { groupIndex: i },
+                meta: {
+                    signalName: signalName,
+                    traceType: 'groupPeak',
+                    groupIndex: i
+                }
+            });
+        }
+
+        var avgTimeValue = timesInGroup.reduce(function(a, b) { return a + b; }, 0) / timesInGroup.length;
+        var avgTime = new Date(avgTimeValue).toISOString();
+        groupAverageTimes[i] = avgTime;
+
+        // Add vertical line for group average time
+        fullTraces.push({
+            x: [avgTime, avgTime],
+            y: [minY, maxY],
+            mode: 'lines',
+            line: {
+                color: 'red',
+                dash: 'dash',
+                width: 2
+            },
+            name: 'Group ' + (i + 1) + ' Avg Time',
+            showlegend: false,
+            hoverinfo: 'text',
+            text: 'Group ' + (i + 1) + ' Avg Time: ' + avgTime + ' (Score: ' + groupScore.toFixed(2) + ')',
+            meta: {
+                groupIndex: i,
+                traceType: 'groupAvgTime'
+            }
+        });
+    }
+
+    layout = {
+        title: 'Signals',
+        xaxis: {
+            title: 'Time (UTC)',
+            type: 'date',
+            tickformat: '%Y-%m-%d %H:%M UTC',
+            hoverformat: '%Y-%m-%d %H:%M UTC'
+        },
+        yaxis: { title: 'Smoothed Normalized Value' },
+        hovermode: 'closest'
+    };
+
+    // Plot the main full plot
+    Plotly.newPlot('plot', fullTraces, layout, { responsive: true })
+        .then(() => {
+            attachClickHandler(); // Attach click handler after rendering
+            plotGroupZooms(groups,processedData); // Static call to plotGroupZooms for top 5 groups
+        })
+        .catch(error => {
+            console.error('Plot rendering error:', error);
+        });
+}
+
+
+function plotGroupZooms(groups,processedData) {
+    const n_groups = 5; // Static value for the number of groups to zoom in on
+
+    // Clear the previous zoomed plots
+    const zoomedPlotsDiv = document.getElementById('zoomed_plots');
+    zoomedPlotsDiv.innerHTML = ''; // Remove previous plots
+
+    // Loop over the top 5 groups and create subplots for each
+    for (let i = 0; i < n_groups; i++) {
+        // Check if there are fewer than 5 groups
+        if (i >= groups.length) {
+            break; // If fewer groups are available, stop the loop
+        }
+
+        // Create a div for each subplot
+        const plotDiv = document.createElement('div');
+        plotDiv.classList.add('zoomed_plot'); // Apply square plot style
+        zoomedPlotsDiv.appendChild(plotDiv); // Append to the container
+
+        const group = groups[i];
+        const groupScore = group.score;
+        const groupIndex = i;
+        const avgTime = groupAverageTimes[groupIndex];
+        const correlation_window = parseInt(document.getElementById('correlation_window').value);
+
+        // Calculate zoom window based on average group time and correlation window
+        const zoomStartTime = new Date(new Date(avgTime).getTime() - 3 * correlation_window * 60 * 1000).toISOString();
+        const zoomEndTime = new Date(new Date(avgTime).getTime() + 3 * correlation_window * 60 * 1000).toISOString();
+
+        // Collect traces for the group
+        const traces = [];
+        for (const signalName in group) {
+            if (signalName === 'score') continue; // Skip the score key
+            const index = group[signalName];
+            const signal = processedData.signals[signalName];
+            const times = signal.times.map(t => new Date(t).toISOString());
+
+            // Add the signal trace for the group in the zoomed-in view
+            traces.push({
+                x: times,
+                y: signal.values,
+                mode: 'lines',
+                name: `${signalName} (Group ${i + 1})`,
+                hoverinfo: 'x+y+name',
+                visible: true,
+            });
+
+            // Add the peak marker for the group in the zoomed-in view
+            const peakTime = new Date(signal.times[index]).toISOString();
+            const peakValue = signal.values[index];
+            traces.push({
+                x: [peakTime],
+                y: [peakValue],
+                mode: 'markers',
+                marker: { symbol: 'diamond', size: 10, color: 'red' },
+                hoverinfo: 'x+y+name',
+                name: `${signalName} Peak`,
+                visible: true,
+            });
+        }
+
+        // Define layout for each subplot
+        const layout = {
+            title: `Group ${i + 1} (Score: ${groupScore.toFixed(2)})`,
+            xaxis: {
+                range: [zoomStartTime, zoomEndTime],
+                title: 'Time (UTC)',
+            },
+            yaxis: {
+                title: 'Smoothed Normalized Value',
+            },
+            showlegend: false,
+            margin: { t: 40, b: 40, l: 40, r: 40 }
+        };
+
+        // Render the zoomed-in plot in its div
+        Plotly.newPlot(plotDiv, traces, layout, { responsive: true })
+            .catch(function(error) {
+                console.error('Error rendering zoomed subplot:', error);
+            });
+    }
+}
+
+
+
+        // Attach click handler to handle zooming into groups
+        function attachClickHandler() {
+            var plotDiv = document.getElementById('plot');
+            if (!plotDiv) {
+                console.error('Plot container not found.');
+                return;
+            }
+
+            plotDiv.on('plotly_click', function(data) {
+                if (data.points.length > 0) {
+                    var point = data.points[0];
+                    var pointMeta = point.fullData.meta;
+
+                    if (pointMeta && (pointMeta.traceType === 'groupPeak' || pointMeta.traceType === 'groupAvgTime')) {
+                        var groupIndex = parseInt(pointMeta.groupIndex);
+
+                        if (currentGroupIndex === groupIndex) {
+                            returnToFullPlot();
+                        } else {
+                            zoomToGroup(groupIndex);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Zoom into the selected group
+        function zoomToGroup(groupIndex) {
+            var plotDiv = document.getElementById('plot');
+            if (!plotDiv) {
+                console.error('Plot container not found.');
+                return;
+            }
+
+            var correlation_window = parseInt(document.getElementById('correlation_window').value);
+            var groupTraceIndices = groupMappings[groupIndex];
+            var groupSignals = {};
+            var avgTime = groupAverageTimes[groupIndex];
+
+            var update = { visible: [] };
+            var zoomStartTime = new Date(new Date(avgTime).getTime() - 3 * correlation_window * 60 * 1000).toISOString();
+            var zoomEndTime = new Date(new Date(avgTime).getTime() + 3 * correlation_window * 60 * 1000).toISOString();
+
+            for (var i = 0; i < fullTraces.length; i++) {
+                var traceMeta = fullTraces[i].meta;
+                if (traceMeta) {
+                    if (traceMeta.traceType === 'signalLine' && groupSignals[traceMeta.signalName]) {
+                        update.visible.push(true);
+                    } else if (traceMeta.traceType === 'groupPeak' && traceMeta.groupIndex === groupIndex) {
+                        update.visible.push(true);
+                    } else if (traceMeta.traceType === 'groupAvgTime' && traceMeta.groupIndex === groupIndex) {
+                        update.visible.push(true);
+                    } else {
+                        update.visible.push(false);
+                    }
+                } else {
+                    update.visible.push(false);
+                }
+            }
+
+            layout.title = 'Signals - Group ' + (groupIndex + 1) + ' at ' + avgTime;
+            layout.xaxis.range = [zoomStartTime, zoomEndTime];
+
+            Plotly.relayout(plotDiv, layout)
+                .then(() => {
+                    return Plotly.restyle(plotDiv, update);
+                })
+                .catch(function(error) {
+                    console.error('Error zooming to group:', error);
+                });
+
+            currentGroupIndex = groupIndex;
+            document.getElementById('backButton').style.display = 'block';
+        }
+
+        // Return to the full plot
+        function returnToFullPlot() {
+            var plotDiv = document.getElementById('plot');
+            if (!plotDiv) {
+                console.error('Plot container not found.');
+                return;
+            }
+
+            var update = { visible: [] };
+
+            for (var i = 0; i < fullTraces.length; i++) {
+                var traceMeta = fullTraces[i].meta;
+                if (traceMeta) {
+                    if (traceMeta.traceType === 'signalLine' || traceMeta.traceType === 'signalPeaks') {
+                        update.visible.push(true);
+                    } else if (traceMeta.traceType === 'groupAvgTime') {
+                        update.visible.push(true);
+                    } else if (traceMeta.traceType === 'groupPeak') {
+                        update.visible.push(true);
+                    } else {
+                        update.visible.push(false);
+                    }
+                } else {
+                    update.visible.push(false);
+                }
+            }
+
+            layout.title = 'Signals';
+            layout.xaxis.range = originalLayout.xaxis.range;
+
+            Plotly.relayout(plotDiv, layout)
+                .then(() => {
+                    return Plotly.restyle(plotDiv, update);
+                })
+                .catch(function(error) {
+                    console.error('Error returning to full plot:', error);
+                });
+
+            currentGroupIndex = null;
+            document.getElementById('backButton').style.display = 'none';
+        }
+
+
+// Mean calculation function that handles NaN, Infinity, and -Infinity
+function mean(values) {
+    let sum = 0;
+    let count = 0;
+    for (const value of values) {
+        if (isFinite(value)) {
+            sum += value;
+            count++;
+        }
+    }
+    return count === 0 ? NaN : sum / count;
+}
+
+// Standard deviation function that handles NaN, Infinity, and -Infinity
+function standardDeviation(values, meanValue) {
+    let sumSquareDiffs = 0;
+    let count = 0;
+    for (const value of values) {
+        if (isFinite(value)) {
+            const diff = value - meanValue;
+            sumSquareDiffs += diff * diff;
+            count++;
+        }
+    }
+    return count === 0 ? NaN : Math.sqrt(sumSquareDiffs / count);
+}
+
+
+// Find peaks in a signal
+function findPeaks(signal, minProminence) {
+    const peaks = [];
+    for (let i = 1; i < signal.length - 1; i++) {
+        if (signal[i] > signal[i - 1] && signal[i] > signal[i + 1]) {
+            let leftMin = signal[i - 1];
+            for (let j = i - 1; j >= 0; j--) {
+                if (signal[j] <= leftMin + (minProminence / 1000.)) {
+                    leftMin = signal[j];
+                } else {
+                    break;
+                }
+            }
+
+            let rightMin = signal[i + 1];
+            for (let j = i + 1; j < signal.length; j++) {
+                if (signal[j] <= rightMin + (minProminence / 1000.)) {
+                    rightMin = signal[j];
+                } else {
+                    break;
+                }
+            }
+
+            const prominence = signal[i] - Math.max(leftMin, rightMin);
+            if (prominence >= minProminence) {
+                peaks.push({
+                    index: i,
+                    value: signal[i],
+                    prominence
+                });
+            }
+        }
+    }
+    return peaks;
+}
+
+// Computes the cross-correlation of two arrays at the given indices
+function computeCrossCorrelation(valuesA, valuesB, indexA, indexB, windowSize) {
+    const startA = Math.max(0, indexA - Math.floor(windowSize / 2));
+    const endA = Math.min(valuesA.length, indexA + Math.floor(windowSize / 2));
+
+    const startB = Math.max(0, indexB - Math.floor(windowSize / 2));
+    const endB = Math.min(valuesB.length, indexB + Math.floor(windowSize / 2));
+
+    const windowA = valuesA.slice(startA, endA);
+    const windowB = valuesB.slice(startB, endB);
+
+    const length = Math.max(windowA.length, windowB.length);
+    windowA.length = length;
+    windowB.length = length;
+
+    const meanA = mean(windowA);
+    const meanB = mean(windowB);
+
+    let numerator = 0;
+    let denominatorA = 0;
+    let denominatorB = 0;
+
+    for (let i = 0; i < length; i++) {
+        const diffA = windowA[i] - meanA;
+        const diffB = windowB[i] - meanB;
+        numerator += diffA * diffB;
+        denominatorA += diffA * diffA;
+        denominatorB += diffB * diffB;
+    }
+
+    const denominator = Math.sqrt(denominatorA * denominatorB);
+
+    return denominator === 0 ? 0 : numerator / denominator;
+}
+
+// Group peaks function
+function groupPeaks(signals, correlationThreshold, correlationWindow, minChannels) {
+    const signalPeaks = {};
+    const signalData = {};
+
+    for (const signalName in signals) {
+        const signal = signals[signalName];
+        const peaks = signal.peaks;
+
+        signalPeaks[signalName] = peaks.map(peak => peak.index);
+        signalData[signalName] = signal.smoothedValues;
+    }
+
+    const groups = [];
+    const signalsList = Object.keys(signalPeaks);
+    const numSignals = signalsList.length;
+
+    for (let i = 0; i < numSignals; i++) {
+        const signalA = signalsList[i];
+        const peaksA = signalPeaks[signalA];
+
+        for (let pa = 0; pa < peaksA.length; pa++) {
+            const indexA = peaksA[pa];
+            const group = {};
+            group[signalA] = indexA;
+            let groupScore = 0; // Initialize group score
+
+            for (let j = i + 1; j < numSignals; j++) {
+                const signalB = signalsList[j];
+                const peaksB = signalPeaks[signalB];
+
+                for (let pb = 0; pb < peaksB.length; pb++) {
+                    const indexB = peaksB[pb];
+
+                    if (Math.abs(indexA - indexB) <= correlationWindow) {
+                        const corr = computeCrossCorrelation(signalData[signalA], signalData[signalB], indexA, indexB, correlationWindow);
+
+                        if (corr >= correlationThreshold) {
+                            group[signalB] = indexB;
+                            groupScore += corr; // Add the correlation to the group score
+                        }
+                    }
+                }
+            }
+
+            if (Object.keys(group).length >= minChannels) {
+                group.score = groupScore; // Attach score to the group
+                groups.push(group);
+            }
+        }
+    }
+
+    // Sort groups by score in descending order
+    groups.sort((a, b) => b.score - a.score);
+
+    return groups;
+}
+
+
+// Linear interpolation function
+function linearInterpolate(x, x0, y0, x1, y1) {
+    return y0 + (x - x0) * (y1 - y0) * (1 / (x1 - x0));
+}
+
+// Resample data at given times using linear interpolation
+function resampleData(originalTimes, originalValues, resampleTimes) {
+    const resampledValues = [];
+    let index = 0;
+
+    for (let i = 0; i < resampleTimes.length; i++) {
+        const t = resampleTimes[i];
+
+        // Find the interval [t0, t1] such that t0 <= t <= t1
+        while (index < originalTimes.length - 1 && originalTimes[index + 1] < t) {
+            index++;
+        }
+
+        if (originalTimes[index] === t) {
+            resampledValues.push(originalValues[index]);
+        } else if (originalTimes[index] < t && originalTimes[index + 1] >= t) {
+            const t0 = originalTimes[index];
+            const t1 = originalTimes[index + 1];
+            const v0 = originalValues[index];
+            const v1 = originalValues[index + 1];
+
+            const interpolatedValue = linearInterpolate(t, t0, v0, t1, v1);
+            resampledValues.push(interpolatedValue);
+        } else {
+            // Extrapolate if outside the known times
+            resampledValues.push(originalValues[index]);
+        }
+    }
+
+    return resampledValues;
+}
+
+function estimateNoiseLevel(window_noise) {
+    const rmsSignal = data["Total RMS"];
+    if (!rmsSignal) {
+        console.error("Total RMS signal not found in the data");
+        return null;
+    }
+
+    // Convert window_noise from minutes to milliseconds
+    const windowSizeMs = window_noise * 60 * 1000;
+
+    // Extract time and value arrays
+    const rmsTimes = Object.keys(rmsSignal).map(t => parseInt(t));  // Convert timestamps to integers
+    const rmsValues = Object.values(rmsSignal);
+
+    const noiseLevels = [];
+    const noiseTimes = [];
+
+    // Iterate through the RMS times to estimate noise over each window
+    for (let i = 0; i < rmsTimes.length; i++) {
+        const currentTime = rmsTimes[i];
+
+        // Define the time window range
+        const windowStart = currentTime - windowSizeMs / 2;
+        const windowEnd = currentTime + windowSizeMs / 2;
+
+        // Get values within the current window
+        const windowValues = rmsValues.filter((val, idx) => rmsTimes[idx] >= windowStart && rmsTimes[idx] <= windowEnd);
+
+        if (windowValues.length > 0) {
+            // Calculate noise level as the standard deviation within the window
+            const meanValue = mean(windowValues);
+            const stdValue = standardDeviation(windowValues, meanValue);
+            noiseLevels.push(stdValue);  // Noise level (std dev)
+            noiseTimes.push(currentTime); // Store the time point for this noise level
+        }
+    }
+
+    return {
+        times: noiseTimes,
+        values: noiseLevels
+    };
+}
+
+function wienerFilter(y, noiseStd, windowSize = 180) {
+    const yArray = Array.from(y);  // Convert input to array if it's not already
+    const noiseVar = noiseStd.map(n => n ** 2);  // Noise variance (squared noise std dev)
+    const filteredSignal = new Array(yArray.length).fill(0);
+    const halfWindow = Math.floor(windowSize / 2);
+
+    // Iterate through the signal, applying the Wiener filter at each point
+    for (let i = 0; i < yArray.length; i++) {
+        // Define the window boundaries
+        const start = Math.max(0, i - halfWindow);
+        const end = Math.min(yArray.length, i + halfWindow + 1);
+
+        // Compute the local mean and variance for the window
+        const yWindow = yArray.slice(start, end);
+        const localMean = mean(yWindow);
+        const localVar = variance(yWindow);
+
+        // Estimate the signal variance (local variance - noise variance)
+        let signalVar = localVar - noiseVar[i];
+        if (signalVar < 0) {
+            signalVar = 0;  // Ensure that the signal variance is non-negative
+        }
+
+        // Compute the Wiener filter gain
+        const H = (signalVar + noiseVar[i]) > 0 ? signalVar / (signalVar + noiseVar[i]) : 0;
+
+        // Apply the filter to the current point
+        filteredSignal[i] = H * (yArray[i] - localMean) + localMean;
+    }
+
+    return filteredSignal;
+}
+
+// Utility function to calculate variance
+function variance(values) {
+    const meanValue = mean(values);
+    const sumSquareDiffs = values.reduce((acc, v) => acc + (v - meanValue) ** 2, 0);
+    return sumSquareDiffs / values.length;
+}
+
+
+
+// Process data function
+function processData(data, n_hours, prominence, correlation_threshold, correlation_window, min_channels, window_noise, applyWiener) {    // Find the maximum timestamp in the data
+    var maxTimestamp = 0;
+    var minTimestamp = Infinity;
+    for (var signalName in data) {
+        var signalData = data[signalName];
+        for (var timestamp in signalData) {
+            var time = parseInt(timestamp); // Timestamps are in milliseconds
+            if (time > maxTimestamp) {
+                maxTimestamp = time;
+            }
+            if (time < minTimestamp) {
+                minTimestamp = time;
+            }
+        }
+    }
+
+    var latestTime = maxTimestamp;
+    var earliestTime = latestTime - n_hours * 3600 * 1000;
+
+    // Generate common time axis at 1-minute intervals
+    var resampleInterval = 60 * 1000; // 1 minute in milliseconds
+    var resampleTimes = [];
+    for (var t = earliestTime; t <= latestTime; t += resampleInterval) {
+        resampleTimes.push(t);
+    }
+
+        // Estimate noise level if enabled
+        let noiseEstimate = null;
+    if (data["Total RMS"]) {
+        noiseEstimate = estimateNoiseLevel(window_noise);
+    }
+
+    var processedSignals = {};
+
+    for (var signalName in data) {
+        if (!enabledChannels[signalName]) continue; // Skip disabled channels
+        var signalData = data[signalName];
+        var times = [];
+        var values = [];
+
+        for (var timestamp in signalData) {
+            var time = parseInt(timestamp); // Timestamps are in milliseconds
+            var value = signalData[timestamp];
+
+            if (time >= earliestTime && time <= latestTime) {
+                times.push(time);
+                values.push(value);
+            }
+        }
+
+        // Sort times and values
+        var combined = times.map(function(e, i) {
+            return { time: e, value: values[i] };
+        });
+        combined.sort(function(a, b) {
+            return a.time - b.time;
+        });
+
+        times = combined.map(function(e) { return e.time; });
+        values = combined.map(function(e) { return e.value; });
+
+        // Resample data at 1-minute intervals using linear interpolation
+        var resampledValues = resampleData(times, values, resampleTimes);
+
+        // Normalization
+        var meanValue = mean(resampledValues);
+        var stdValue = standardDeviation(resampledValues, meanValue);
+        var normalizedValues = resampledValues.map(function(v) {
+            return ((v - meanValue) / stdValue) + (-50);
+        });
+
+                // Apply Wiener filter if enabled and noise estimate is available
+        if (applyWiener && noiseEstimate) {
+            smoothedValues = wienerFilter(normalizedValues, noiseEstimate.values, window_noise);
+        } else {
+            smoothedValues = normalizedValues;
+        }
+
+        // Find peaks in smoothed normalized values
+        var peaks = findPeaks(smoothedValues, prominence);
+
+        processedSignals[signalName] = {
+            times: resampleTimes,
+            values: smoothedValues, // Use smoothed values for plotting
+            smoothedValues: smoothedValues,
+            peaks: peaks
+        };
+    }
+
+    var groups = groupPeaks(processedSignals, correlation_threshold, correlation_window, min_channels);
+
+    return {
+        signals: processedSignals,
+        groups: groups
+    };
+}
+
+    </script>
+</body>
+</html>
