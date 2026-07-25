@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FFT Spectrogram Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+        .header {
+            margin-bottom: 2rem;
+        }
+        .title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+        }
+        .status {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .status.error {
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+        .status.loading {
+            color: #4b5563;
+            background-color: #f3f4f6;
+            text-align: center;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .slider {
+            width: 100%;
+        }
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .number-input {
+            width: 100px;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+        }
+        .plots {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">FFT Spectrogram Visualization</h1>
+        </div>
+
+        <div id="statusError" class="status error"></div>
+        <div id="statusLoading" class="status loading">Loading data...</div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label class="control-label">Center Frequency</label>
+                <div class="input-group">
+                    <input type="number" id="centerFrequencyInput" class="number-input" step="any">
+                    <span>Hz</span>
+                </div>
+                <input type="range" id="centerFrequencySlider" class="slider">
+            </div>
+            <div class="control-group">
+                <label class="control-label">Bandwidth</label>
+                <div class="input-group">
+                    <input type="number" id="bandwidthInput" class="number-input" step="any">
+                    <span>Hz</span>
+                </div>
+                <input type="range" id="bandwidthSlider" class="slider">
+            </div>
+        </div>
+
+        <div class="plots">
+            <div id="spectrogram"></div>
+            <div id="magnitudeOverTime"></div>
+        </div>
+    </div>
+
+    <script>
+        // Previous JavaScript code remains exactly the same, but change the loading/error selectors
+        const state = {
+            data: null,
+            frequencies: [],
+            timestamps: [],
+            magnitudes: [],
+            binWidth: 0,
+            centerFreq: 0,
+            bandwidth: 0,
+            maxBandwidth: 1000,
+            transposedMagnitudes: [],
+            linearValues: [],
+            bandCache: {
+                centerFreq: null,
+                bandwidth: null,
+                magnitudeOverTime: null
+            }
+        };
+
+        // ... (all the utility functions remain the same)
+        function transpose(matrix) {
+            return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+        }
+
+        function findClosestIndex(target) {
+            let left = 0;
+            let right = state.frequencies.length - 1;
+            
+            while (left <= right) {
+                const mid = Math.floor((left + right) / 2);
+                if (state.frequencies[mid] === target) return mid;
+                if (state.frequencies[mid] < target) left = mid + 1;
+                else right = mid - 1;
+            }
+            
+            if (right < 0) return 0;
+            if (left >= state.frequencies.length) return state.frequencies.length - 1;
+            
+            return Math.abs(state.frequencies[left] - target) < 
+                   Math.abs(state.frequencies[right] - target) ? left : right;
+        }
+
+        function findClosestFrequency(target) {
+            const index = findClosestIndex(target);
+            return state.frequencies[index];
+        }
+
+        // Modified for amplitude measurements (20*log10)
+        function fromDB(db) {
+            return Math.pow(10, db / 20);
+        }
+
+        function toDB(amplitude) {
+            return 20 * Math.log10(Math.max(amplitude, 1e-10));
+        }
+
+        // Pre-compute linear values after loading data
+        function precomputeLinearValues() {
+            state.linearValues = state.transposedMagnitudes.map(row => 
+                row.map(db => fromDB(db))
+            );
+        }
+
+        // Optimized band magnitude calculation
+        function calculateBandMagnitude(startIndex, endIndex, timeIndex) {
+            const numBins = endIndex - startIndex + 1;
+            let sum = 0;
+            for (let i = startIndex; i <= endIndex; i++) {
+                sum += state.linearValues[i][timeIndex];
+            }
+            return toDB(sum / numBins);
+        }
+
+        function updateControls() {
+            const centerFreqSlider = document.getElementById('centerFrequencySlider');
+            const bandwidthSlider = document.getElementById('bandwidthSlider');
+            const centerFreqInput = document.getElementById('centerFrequencyInput');
+            const bandwidthInput = document.getElementById('bandwidthInput');
+            
+            state.centerFreq = findClosestFrequency(state.centerFreq);
+            state.bandwidth = Math.max(state.binWidth, 
+                Math.min(state.maxBandwidth, 
+                    Math.round(state.bandwidth / state.binWidth) * state.binWidth
+                )
+            );
+
+            centerFreqSlider.value = state.centerFreq;
+            bandwidthSlider.value = state.bandwidth;
+            centerFreqInput.value = state.centerFreq.toFixed(1);
+            bandwidthInput.value = state.bandwidth.toFixed(1);
+        }
+
+        function updatePlots() {
+            // Check if we can use cached results
+            if (state.bandCache.centerFreq === state.centerFreq && 
+                state.bandCache.bandwidth === state.bandwidth &&
+                state.bandCache.magnitudeOverTime) {
+                renderPlots(state.bandCache.magnitudeOverTime);
+                return;
+            }
+
+            const centerIndex = findClosestIndex(state.centerFreq);
+            const bandwidthBins = Math.round(state.bandwidth / state.binWidth);
+            const halfBandwidth = Math.floor(bandwidthBins / 2);
+            
+            const startIndex = Math.max(0, centerIndex - halfBandwidth);
+            const endIndex = Math.min(
+                state.frequencies.length - 1,
+                centerIndex + halfBandwidth - (bandwidthBins % 2 === 0 ? 1 : 0)
+            );
+
+            // Calculate magnitude over time with optimized method
+            const magnitudeOverTime = new Array(state.timestamps.length);
+            for (let t = 0; t < state.timestamps.length; t++) {
+                magnitudeOverTime[t] = calculateBandMagnitude(startIndex, endIndex, t);
+            }
+
+            // Cache the results
+            state.bandCache = {
+                centerFreq: state.centerFreq,
+                bandwidth: state.bandwidth,
+                magnitudeOverTime
+            };
+
+            renderPlots(magnitudeOverTime);
+        }
+
+        function renderPlots(magnitudeOverTime) {
+            const centerIndex = findClosestIndex(state.centerFreq);
+            const bandwidthBins = Math.round(state.bandwidth / state.binWidth);
+            const halfBandwidth = Math.floor(bandwidthBins / 2);
+            const startIndex = Math.max(0, centerIndex - halfBandwidth);
+            const endIndex = Math.min(
+                state.frequencies.length - 1,
+                centerIndex + halfBandwidth - (bandwidthBins % 2 === 0 ? 1 : 0)
+            );
+
+            // Spectrogram plot configuration
+            const spectrogramTrace = {
+                z: state.transposedMagnitudes,
+                x: state.timestamps,
+                y: state.frequencies,
+                type: 'heatmap',
+                colorscale: 'Viridis',
+                colorbar: { title: 'dB' }
+            };
+
+            const shapes = [
+                {
+                    type: 'line',
+                    xref: 'x',
+                    yref: 'y',
+                    x0: state.timestamps[0],
+                    y0: state.centerFreq,
+                    x1: state.timestamps[state.timestamps.length - 1],
+                    y1: state.centerFreq,
+                    line: { 
+                        color: '#FF1493',
+                        width: 3,
+                        dash: 'solid'
+                    }
+                },
+                {
+                    type: 'line',
+                    xref: 'x',
+                    yref: 'y',
+                    x0: state.timestamps[0],
+                    y0: state.frequencies[startIndex],
+                    x1: state.timestamps[state.timestamps.length - 1],
+                    y1: state.frequencies[startIndex],
+                    line: { color: '#00FF00', width: 2 }
+                },
+                {
+                    type: 'line',
+                    xref: 'x',
+                    yref: 'y',
+                    x0: state.timestamps[0],
+                    y0: state.frequencies[endIndex],
+                    x1: state.timestamps[state.timestamps.length - 1],
+                    y1: state.frequencies[endIndex],
+                    line: { color: '#00FF00', width: 2 }
+                }
+            ];
+
+            const spectrogramLayout = {
+                title: 'Spectrogram',
+                xaxis: { title: 'Time' },
+                yaxis: { 
+                    title: 'Frequency (Hz)',
+                    range: [0, Math.max(...state.frequencies)]
+                },
+                shapes,
+                height: 600
+            };
+
+            const config = {
+                responsive: true
+            };
+
+            // Create spectrogram with click handler
+            Plotly.newPlot('spectrogram', [spectrogramTrace], spectrogramLayout, config)
+                .then(function(gd) {
+                    gd.on('plotly_click', function(data) {
+                        if (data.points && data.points[0]) {
+                            state.centerFreq = data.points[0].y;
+                            updateControls();
+                            updatePlots();
+                        }
+                    });
+                });
+
+            // Magnitude plot
+            const magnitudeTrace = {
+                x: state.timestamps,
+                y: magnitudeOverTime,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'blue' },
+                name: 'Magnitude'
+            };
+
+            const magnitudeLayout = {
+                title: 'Average Band Magnitude',
+                xaxis: { title: 'Time' },
+                yaxis: { 
+                    title: 'Magnitude (dB)',
+                    range: [
+                        Math.min(...magnitudeOverTime) - 5,
+                        Math.max(...magnitudeOverTime) + 5
+                    ]
+                },
+                height: 300
+            };
+
+            Plotly.newPlot('magnitudeOverTime', [magnitudeTrace], magnitudeLayout, config);
+        }
+
+        async function init() {
+            const loadingStatus = document.getElementById('statusLoading');
+            const errorStatus = document.getElementById('statusError');
+            
+            loadingStatus.style.display = 'block';
+            errorStatus.style.display = 'none';
+
+            try {
+                const response = await fetch('fft.json');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                state.data = await response.json();
+                state.frequencies = [...state.data.frequencies].sort((a, b) => a - b);
+                state.timestamps = state.data.data.map(d => new Date(d.timestamp));
+                state.magnitudes = state.data.data.map(d => d.magnitudes);
+                state.binWidth = state.frequencies.length >= 2 ? 
+                    state.frequencies[1] - state.frequencies[0] : 0;
+                state.transposedMagnitudes = transpose(state.magnitudes);
+                
+                console.log("precomputing linear values");
+                precomputeLinearValues();
+
+                const centerFreqSlider = document.getElementById('centerFrequencySlider');
+                const bandwidthSlider = document.getElementById('bandwidthSlider');
+                const centerFreqInput = document.getElementById('centerFrequencyInput');
+                const bandwidthInput = document.getElementById('bandwidthInput');
+                
+                state.centerFreq = state.frequencies[Math.floor(state.frequencies.length / 2)];
+                centerFreqSlider.min = state.frequencies[0];
+                centerFreqSlider.max = state.frequencies[state.frequencies.length - 1];
+                centerFreqSlider.step = state.binWidth;
+                centerFreqSlider.value = state.centerFreq;
+                centerFreqInput.value = state.centerFreq.toFixed(1);
+                
+                state.bandwidth = Math.floor(state.maxBandwidth / state.binWidth) * state.binWidth;
+                bandwidthSlider.min = state.binWidth;
+                bandwidthSlider.max = state.maxBandwidth;
+                bandwidthSlider.step = state.binWidth;
+                bandwidthSlider.value = state.bandwidth;
+                bandwidthInput.value = state.bandwidth.toFixed(1);
+
+                centerFreqSlider.addEventListener('input', (e) => {
+                    state.centerFreq = Number(e.target.value);
+                    updateControls();
+                    updatePlots();
+                });
+
+                bandwidthSlider.addEventListener('input', (e) => {
+                    state.bandwidth = Number(e.target.value);
+                    updateControls();
+                    updatePlots();
+                });
+
+                centerFreqInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        state.centerFreq = Number(e.target.value);
+                        updateControls();
+                        updatePlots();
+                    }
+                });
+
+                bandwidthInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        state.bandwidth = Number(e.target.value);
+                        updateControls();
+                        updatePlots();
+                    }
+                });
+
+                updatePlots();
+
+            } catch (err) {
+                errorStatus.textContent = `Error loading data: ${err.message}`;
+                errorStatus.style.display = 'block';
+            } finally {
+                loadingStatus.style.display = 'none';
+            }
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
