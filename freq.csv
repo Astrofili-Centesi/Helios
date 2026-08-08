@@ -1,0 +1,18 @@
+Canale,Freq,Sigla,Città
+ch1,4500,Noise_7k,N.A.
+ch2,11350,Noise_11k,N.A.
+ch3,27200,Noise_27k,N.A.
+ch4,58750,Noise_58k,N.A.
+ch5,89750,Noise_89k,N.A.
+ch6,19600,GBZ,Skelto - GB
+ch7,20270,ICV,Tavolar - IT
+ch8,20900,HWU,Rosnay - FR
+ch9,22600,FTA(b),Rosnay - FR
+ch10,23400,DHO38,Rhauderfehn Marinefunksendestelle - D
+ch11,24000,NAA,Cutler - USA
+ch12,26700,TBB,Denizköy Bafa - TUR
+ch13,29700,ISR,Israele - ISR
+ch14,45900,NSY,Niscemi – IT
+ch15,63850,FTA,Rosnay - FR
+ch16,77500,DCF77,Mainflingen - D
+ch17,65800,Total RMS,NA
