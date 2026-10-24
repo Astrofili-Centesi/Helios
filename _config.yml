@@ -1,0 +1,14 @@
+#theme: jekyll-theme-cayman
+url: https://www.astrofilicentesi.it
+baseurl: /Helios
+include: 
+  - data
+  - assets
+paginate: 3
+paginate_path: "/page:num/"
+plugins:
+  - jekyll-paginate
+exclude:
+  - venv
+  - Gemfile
+  - Gemfile.lock
