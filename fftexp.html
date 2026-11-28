@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>24h FFT Data Explorer - JSON.GZ</title>
+  <!-- Load Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <!-- Load pako for gzip decompression -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #controls { margin-bottom: 20px; }
+    .slider-container { margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>24h FFT Data Explorer - JSON.GZ</h1>
+  <div id="controls">
+    <label for="channelSelect">Channel Selection:</label>
+    <select id="channelSelect">
+      <option value="">Manual</option>
+    </select>
+    <br><br>
+    <div class="slider-container">
+      <label for="centerSlider">Central Frequency: <span id="centerValue"></span> Hz</label><br>
+      <input type="range" id="centerSlider" min="0" max="100" value="0" step="1" style="width:300px;">
+    </div>
+    <div class="slider-container">
+      <label for="bwSlider">Bandwidth: <span id="bwValue"></span> Hz</label><br>
+      <input type="range" id="bwSlider" min="10" max="1000" value="100" step="1" style="width:300px;">
+    </div>
+  </div>
+  <div id="plot"></div>
+  <script>
+    // Predefined channels from your table as a JSON array.
+    const channels = [
+      {"canale": "ch1", "freq": 4500,  "sigla": "Noise_7k",         "città": "N.A."},
+      {"canale": "ch2", "freq": 11350, "sigla": "Noise_11k",        "città": "N.A."},
+      {"canale": "ch3", "freq": 27200, "sigla": "Noise_27k",        "città": "N.A."},
+      {"canale": "ch4", "freq": 58750, "sigla": "Noise_58k",        "città": "N.A."},
+      {"canale": "ch5", "freq": 89750, "sigla": "Noise_89k",        "città": "N.A."},
+      {"canale": "ch6", "freq": 19600, "sigla": "GBZ",              "città": "Skelto - GB"},
+      {"canale": "ch7", "freq": 20270, "sigla": "ICV",              "città": "Tavolar - IT"},
+      {"canale": "ch8", "freq": 20900, "sigla": "HWU",              "città": "Rosnay - FR"},
+      {"canale": "ch9", "freq": 22600, "sigla": "FTA(b)",           "città": "Rosnay - FR"},
+      {"canale": "ch10", "freq": 23400, "sigla": "DHO38",           "città": "Rhauderfehn Marinefunksendestelle - D"},
+      {"canale": "ch11", "freq": 24000, "sigla": "NAA",             "città": "Cutler - USA"},
+      {"canale": "ch12", "freq": 26700, "sigla": "TBB",             "città": "Denizköy Bafa - TUR"},
+      {"canale": "ch13", "freq": 29700, "sigla": "ISR",             "città": "Israele - ISR"},
+      {"canale": "ch14", "freq": 45900, "sigla": "NSY",             "città": "Niscemi – IT"},
+      {"canale": "ch15", "freq": 63850, "sigla": "FTA",             "città": "Rosnay - FR"},
+      {"canale": "ch16", "freq": 77500, "sigla": "DCF77",           "città": "Mainflingen - D"},
+      {"canale": "ch17", "freq": 65800, "sigla": "Total RMS",       "città": "NA"}
+    ];
+
+    let fftData = null;  // Will hold the decompressed and parsed JSON data.
+    let headerFrequencies = [];  // Array of frequency values (numbers) from the header.
+    let minFreq = 0, maxFreq = 0;
+
+    const channelSelect = document.getElementById("channelSelect");
+    const centerSlider = document.getElementById("centerSlider");
+    const bwSlider = document.getElementById("bwSlider");
+    const centerValueLabel = document.getElementById("centerValue");
+    const bwValueLabel = document.getElementById("bwValue");
+
+    // Populate dropdown with predefined channels.
+    channels.forEach((ch, index) => {
+      const option = document.createElement("option");
+      option.value = index;
+      option.text = `${ch.canale}: ${ch.sigla} (${ch.freq} Hz)`;
+      channelSelect.appendChild(option);
+    });
+
+    // Function to update the Plotly chart.
+    function updatePlot() {
+      if (!fftData) return;
+      const centerFreq = parseFloat(centerSlider.value);
+      const bw = parseFloat(bwSlider.value);
+      const freqMin = centerFreq - bw / 2;
+      const freqMax = centerFreq + bw / 2;
+
+      // Identify indices in the header that are within the selected frequency range.
+      let selectedIndices = [];
+      headerFrequencies.forEach((f, idx) => {
+        if (f >= freqMin && f <= freqMax) {
+          selectedIndices.push(idx);
+        }
+      });
+      if (selectedIndices.length === 0) {
+        console.warn("No FFT bins found for the selected frequency range.");
+        return;
+      }
+
+      // For each row, convert dB values to linear, average them, and convert back to dB.
+      const levels = fftData.rows.map(row => {
+        const values = selectedIndices.map(i => row.levels[i]);
+        if (values.length > 0) {
+          const linearValues = values.map(v => Math.pow(10, v / 20));
+          const avgLinear = linearValues.reduce((a, b) => a + b, 0) / linearValues.length;
+          return 20 * Math.log10(avgLinear);
+        }
+        return null;
+      });
+
+      // Convert timestamps.
+      const times = fftData.rows.map(row => new Date(row.timestamp));
+
+      const trace = {
+        x: times,
+        y: levels,
+        mode: 'lines',  // continuous line (no markers)
+        type: 'scatter',
+        name: `Center: ${centerFreq} Hz, BW: ${bw} Hz`
+      };
+
+      const layout = {
+        title: `FFT Level over 24h for Frequency Range ${freqMin.toFixed(2)} Hz - ${freqMax.toFixed(2)} Hz`,
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'Level (dB)' }
+      };
+
+      Plotly.newPlot('plot', [trace], layout);
+    }
+
+    // When a predefined channel is selected, update the sliders.
+    channelSelect.addEventListener("change", function() {
+      const selectedIndex = channelSelect.value;
+      if (selectedIndex !== "") {
+        const channel = channels[parseInt(selectedIndex)];
+        centerSlider.value = channel.freq;
+        bwSlider.value = 100; // default bandwidth
+        centerValueLabel.textContent = channel.freq;
+        bwValueLabel.textContent = bwSlider.value;
+      }
+      updatePlot();
+    });
+
+    // When sliders are adjusted manually, reset the dropdown to "Manual" and update labels.
+    centerSlider.addEventListener("input", function() {
+      centerValueLabel.textContent = this.value;
+      channelSelect.value = "";
+      updatePlot();
+    });
+    bwSlider.addEventListener("input", function() {
+      bwValueLabel.textContent = this.value;
+      channelSelect.value = "";
+      updatePlot();
+    });
+
+    // Load and process the JSON.GZ file.
+    async function loadFFTData() {
+      try {
+        const response = await fetch("fft.json.gz");
+        const compressedBuffer = await response.arrayBuffer();
+        // Decompress the gzip data using pako; return a string.
+        const decompressedString = pako.ungzip(new Uint8Array(compressedBuffer), { to: 'string' });
+        // Parse the JSON string.
+        fftData = JSON.parse(decompressedString);
+        // Convert header values to numbers.
+        headerFrequencies = fftData.header.map(f => parseFloat(f));
+        minFreq = Math.min(...headerFrequencies);
+        maxFreq = Math.max(...headerFrequencies);
+        // Set up slider ranges.
+        centerSlider.min = Math.floor(minFreq);
+        centerSlider.max = Math.ceil(maxFreq);
+        centerSlider.value = Math.floor((minFreq + maxFreq) / 2);
+        centerValueLabel.textContent = centerSlider.value;
+        bwSlider.min = 10;
+        bwSlider.max = 1000;
+        bwSlider.value = 100;
+        bwValueLabel.textContent = bwSlider.value;
+        updatePlot();
+      } catch (error) {
+        console.error("Error loading or processing fft.json.gz:", error);
+      }
+    }
+
+    // Start loading data when the page loads.
+    loadFFTData();
+  </script>
+</body>
+</html>

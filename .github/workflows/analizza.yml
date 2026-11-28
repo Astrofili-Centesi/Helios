@@ -1,0 +1,84 @@
+# This is a basic workflow to help you get started with Actions
+
+name: analyze
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+    #paths:
+    #  - db.csv
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            if [ -f scripts/requirements.txt ]; then pip install -r scripts/requirements.txt; fi
+      - name: execute script
+        run: |
+            cp db.csv /tmp/
+            python scripts/analyze.py /tmp/db.csv /tmp/db_latest.json /tmp/db_latest_day.json /tmp/db_mean_5days.json /tmp/db_latest_5days.json /tmp/db_latest_month.json
+            cp fft.csv /tmp/
+            python scripts/fft2json.py -i /tmp/fft.csv --step 2 -o /tmp/fft.json
+            gzip -9 -f /tmp/fft.json
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Deploy to gh-pages (orphan strategy)
+        run: |
+            # Configure git
+            git config --global user.name "GitHub Actions Bot"
+            git config --global user.email "actions@github.com"
+
+            # Update only data directory
+            rm -rf data
+            mkdir -p data
+            cp /tmp/db_latest.json data/
+            cp /tmp/db_latest_day.json data/
+            cp /tmp/db_mean_5days.json data/
+            cp /tmp/db_latest_5days.json data/
+            cp /tmp/db_latest_month.json data/
+            cp /tmp/fft.json.gz data/
+
+            # Create orphan branch (no history)
+            git checkout --orphan gh-pages-tmp
+
+            # Add all files (preserves existing files, updates data)
+            git add -A
+            git commit -m "Data update $(date -Iseconds)" --no-verify
+
+            # Delete old gh-pages branch and rename
+            git branch -D gh-pages 2>/dev/null || true
+            git branch -m gh-pages
+
+            # Force push to replace history
+            git push -f origin gh-pages
